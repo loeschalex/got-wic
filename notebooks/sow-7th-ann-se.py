@@ -12,7 +12,7 @@ __generated_with = "0.20.4"
 app = marimo.App(width="medium")
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _():
     from __future__ import annotations
     from dataclasses import dataclass, field
@@ -24,7 +24,7 @@ def _():
     return dataclass, field, mo, np, product
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(dataclass, field):
     @dataclass(frozen=True)
     class Objective:
@@ -72,7 +72,7 @@ def _(dataclass, field):
     return Allocation, Dragon, GameConfig, Objective
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(Dragon, GameConfig, Objective):
     def default_config() -> GameConfig:
         objectives = [
@@ -91,7 +91,7 @@ def _(Dragon, GameConfig, Objective):
     return (default_config,)
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(Allocation, GameConfig, dataclass, field):
     @dataclass
     class SimResult:
@@ -180,7 +180,7 @@ def _(Allocation, GameConfig, dataclass, field):
     return (simulate,)
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(Allocation, GameConfig, Objective, np):
     _OWN_ZONES = {"near_greyjoy"}
     _ENEMY_ZONES = {"near_stark"}
@@ -250,7 +250,7 @@ def _(Allocation, GameConfig, Objective, np):
     return (generate_opponent,)
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(Allocation, GameConfig, dataclass, generate_opponent, product, simulate):
     @dataclass
     class OptResult:
@@ -318,7 +318,7 @@ def _(Allocation, GameConfig, dataclass, generate_opponent, product, simulate):
     return (optimize,)
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
     # Siege of Winterfell — 7th Anniversary Strategy Optimizer
@@ -345,7 +345,7 @@ def _(mo):
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(mo):
     mo.md("""
     ## 1 · Config
@@ -353,7 +353,7 @@ def _(mo):
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(default_config, mo):
     cfg = default_config()
     mo.ui.table(
@@ -381,7 +381,7 @@ def _(mo):
     return players_a, players_b
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(mo):
     mo.md("""
     ## 2 · Opponent Profile
@@ -397,7 +397,7 @@ def _(mo):
     return opp_aggression, opp_spread
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(cfg, generate_opponent, mo, opp_aggression, opp_spread, players_b):
     opp_alloc = generate_opponent(cfg, players_b.value * 3, opp_spread.value, opp_aggression.value)
     opp_rows = []
@@ -412,7 +412,7 @@ def _(cfg, generate_opponent, mo, opp_aggression, opp_spread, players_b):
     return (opp_alloc,)
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(mo):
     mo.md("""
     ## 3 · Manual Allocation
@@ -420,7 +420,7 @@ def _(mo):
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(mo):
     mo.md("""
     Set the percentage of your total armies for each objective group per phase.
@@ -458,7 +458,7 @@ def _(mo):
     )
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(
     Allocation,
     cfg,
@@ -533,7 +533,7 @@ def _(
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(mo):
     mo.md("""
     ## 4 · Optimizer
@@ -548,7 +548,7 @@ def _(mo):
     return (step_pct,)
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(
     cfg,
     mo,
@@ -602,7 +602,7 @@ def _(
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(mo):
     mo.md("""
     ## 5 · Player Ratio Sweep
@@ -610,7 +610,7 @@ def _(mo):
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(cfg, mo, opp_aggression, opp_spread, optimize):
     sweep_rows = []
     for _a in range(30, 80, 10):
@@ -638,7 +638,7 @@ def _(cfg, mo, opp_aggression, opp_spread, optimize):
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(mo):
     mo.md("""
     ## 6 · Opponent Sensitivity
@@ -646,7 +646,7 @@ def _(mo):
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(cfg, mo, optimize, players_a, players_b):
     sensitivity_rows = []
     for _spread in [0.0, 0.3, 0.5, 0.7, 1.0]:
@@ -668,7 +668,7 @@ def _(cfg, mo, optimize, players_a, players_b):
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(mo):
     mo.md("""
     ## 7 · Strategic Insights
