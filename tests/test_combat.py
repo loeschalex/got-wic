@@ -1,5 +1,6 @@
 import numpy as np
-from got_wic.combat import resolve_tick, CombatState
+from got_wic.combat import resolve_tick, CombatState, BuildingFight, apply_attrition
+from got_wic.model import PlayerTier
 
 
 def test_equal_forces_both_take_losses():
@@ -53,3 +54,59 @@ def test_deterministic_without_noise():
     r2 = resolve_tick(state, alpha=1.0, beta=1.0, noise_scale=0.0)
     assert r1.power_a == r2.power_a
     assert r1.power_b == r2.power_b
+
+
+# --- Attrition / Healing tests ---
+
+
+def test_attrition_removes_weakest_first():
+    """Losses should deplete alts before whales."""
+    tiers = [
+        PlayerTier("whale", 100.0, -1),
+        PlayerTier("alt", 1.0, 2),
+    ]
+    fight = BuildingFight(
+        tiers=tiers,
+        counts=[1, 10],
+        healing_remaining=[0, 0],  # no healing left for alts
+    )
+    updated = apply_attrition(fight, losses=8.0)
+    assert updated.counts[1] < 10  # alts reduced
+    assert updated.counts[0] == 1  # whale untouched
+
+
+def test_healing_restores_power():
+    """Players with healing budget can recover from losses."""
+    tiers = [PlayerTier("minnow", 8.0, 4)]
+    fight = BuildingFight(
+        tiers=tiers,
+        counts=[10],
+        healing_remaining=[40],
+    )
+    updated = apply_attrition(fight, losses=16.0)
+    assert updated.total_power >= fight.total_power - 16.0
+
+
+def test_no_healing_permanent_loss():
+    """Players with 0 healing remaining are gone forever."""
+    tiers = [PlayerTier("alt", 1.0, 2)]
+    fight = BuildingFight(
+        tiers=tiers,
+        counts=[10],
+        healing_remaining=[0],
+    )
+    updated = apply_attrition(fight, losses=5.0)
+    assert updated.counts[0] == 5
+    assert updated.total_power == 5.0
+
+
+def test_whale_unlimited_healing():
+    """Whales (healing_capacity=-1) always heal back."""
+    tiers = [PlayerTier("whale", 100.0, -1)]
+    fight = BuildingFight(
+        tiers=tiers,
+        counts=[2],
+        healing_remaining=[0],
+    )
+    updated = apply_attrition(fight, losses=100.0)
+    assert updated.counts[0] == 2
