@@ -1,10 +1,11 @@
 [project]
 name = "got-wic"
 version = "0.1.0"
-description = "Add your description here"
+description = "Game of Thrones: Winter is Coming — strategy simulators and analysis notebooks"
 requires-python = ">=3.13"
 dependencies = [
     "marimo>=0.20.4",
+    "numpy>=2.4.3",
 ]
 
 [tool.uv]
