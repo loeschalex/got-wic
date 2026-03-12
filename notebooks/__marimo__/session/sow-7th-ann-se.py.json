@@ -4,5 +4,232 @@
     "marimo_version": "0.20.4",
     "script_metadata_hash": null
   },
-  "cells": []
+  "cells": [
+    {
+      "id": "Hbol",
+      "code_hash": "54008fb4118294f1c14a3c03beeb7558",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h1 id=\"siege-of-winterfell-strategy-simulator\">Siege of Winterfell \u2014 Strategy Simulator</h1>\n<span class=\"paragraph\">This notebook models the point-accumulation mechanics of the <strong>Siege of Winterfell</strong>\nevent in <em>Game of Thrones: Winter is Coming</em> (GTArcade).  It simulates a 60-minute\nbattle under configurable assumptions and grid-searches over deployment allocations\nto find the strategy that maximises total alliance points.</span>\n<h2 id=\"scoring-channels\">Scoring channels</h2>\n<ol>\n<li><strong>First capture</strong> \u2014 one-time points when your alliance first occupies a building.</li>\n<li><strong>Holding</strong> \u2014 points per minute for each building you control.</li>\n<li><strong>Chest escort</strong> \u2014 chests spawn at Winterfell starting at minute 12.  The first\n   yields 4 000 pts; each subsequent chest adds 1 000.  A new chest appears\n   5 min after successful delivery.  Escorting takes time and ties up deployments.</li>\n</ol>\n<h2 id=\"map-timeline\">Map timeline</h2>\n<table>\n<thead>\n<tr>\n<th>Period</th>\n<th>Minutes</th>\n<th>Available</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>1</td>\n<td>0\u201312</td>\n<td>All buildings</td>\n</tr>\n<tr>\n<td>2</td>\n<td>12\u201360</td>\n<td>All buildings; chests begin spawning</td>\n</tr>\n</tbody>\n</table>\n<h2 id=\"deployment-model\">Deployment model</h2>\n<span class=\"paragraph\">Each player contributes 3 deployments.  Deployments are split across three roles:\n<strong>building capture/hold</strong>, <strong>chest escort</strong>, and <strong>reserve</strong>.  The number of buildings\nyou can hold is bounded by <code>min(available_buildings, deployments / cost_per_building)</code>,\nfurther attenuated by the <strong>opponent strength</strong> parameter.  Chest throughput is\nconstrained by the game rule that only one chest at a time comes from Winterfell\n(next spawns after delivery + delay).</span>\n<blockquote>\n<span class=\"paragraph\"><strong>Point values below are placeholders.</strong>  Replace them with the actual in-game\nvalues for calibrated results.</span>\n</blockquote></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "vblA",
+      "code_hash": "7f178acdbbc56e24c402565047e102b1",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"1-building-parameters\">1 \u00b7 Building Parameters</h2></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "bkHC",
+      "code_hash": "04f21ee3d2c378daa09da767a2bf1615",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\">Each building type: <strong>first-capture points</strong>, <strong>hold points/min</strong>,\n<strong>count</strong> on the map, <strong>capture time</strong>, and <strong>deployment cost</strong> (how many\ndeployments needed to capture and garrison one instance).</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "SFPL",
+      "code_hash": "d1f8bfe9ef64fb728e18f24150a6eed6",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"2-chest-escort-parameters\">2 \u00b7 Chest / Escort Parameters</h2></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "RGSE",
+      "code_hash": "ecc7a4146753364f7f5573819273ef75",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"3-force-opponent-parameters\">3 \u00b7 Force &amp; Opponent Parameters</h2></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "emfo",
+      "code_hash": "64e7c06d865c5cf91d6ba9167d13a8d7",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"4-manual-strategy-allocation\">4 \u00b7 Manual Strategy Allocation</h2>\n<span class=\"paragraph\">Set the percentage of your total deployment budget for each role.\nReserve = 100% \u2212 buildings% \u2212 chests% (clamped to \u2265 0).</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "nWHF",
+      "code_hash": "f78a8daa16732e10351438635b23b108",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"5-simulation-results\">5 \u00b7 Simulation Results</h2></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "Vxnm",
+      "code_hash": "c9b95dfe0cfcc7c43312fa3872bb6d82",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"6-allocation-optimiser\">6 \u00b7 Allocation Optimiser</h2>\n<span class=\"paragraph\">Grid search over <code>(% buildings, % chests)</code> in 5 % steps.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "ecfG",
+      "code_hash": "202b724b8d69cca369200aa3bbe2d6a8",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"7-sensitivity-hold-success-sweep\">7 \u00b7 Sensitivity: Hold-Success Sweep</h2>\n<span class=\"paragraph\">The table below re-runs the optimiser for hold-success rates from 0.3 to 1.0,\nshowing how the optimal allocation shifts with opponent pressure.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "aLJB",
+      "code_hash": "313511a98aef809aedc5aa732be3edb9",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"8-notes-limitations\">8 \u00b7 Notes &amp; Limitations</h2>\n<ol>\n<li>The simulation is <strong>deterministic</strong>. A stochastic variant (Beta-distributed\n   hold-success per minute, Monte Carlo over uncertain point values) would\n   produce distributional outputs rather than point estimates.</li>\n<li><strong>Only one chest at a time</strong> can be in transit from Winterfell per the game\n   rules.  The model enforces this.</li>\n<li>The model does <strong>not</strong> account for combat buffs from Hot Spring / Armory,\n   troop strength decay, or healing mechanics.</li>\n<li><strong>Temporal reallocation</strong> (shifting from buildings-heavy in Period 1 to\n   chests-heavy in Period 2) is not modelled; the current version uses a\n   static allocation for the full 60 minutes.</li>\n<li>Building point values are <strong>placeholders</strong>.  Update them from in-game\n   screenshots for calibrated recommendations.</li>\n</ol></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "MJUe",
+      "code_hash": "a9d43d6ece555a5d4445d2011ca34e26",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "lEQa",
+      "code_hash": "9670d7a3d51f3388f61550b92f89eadf",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "PKri",
+      "code_hash": "32a7942bff54984132b2bc6946dbf772",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "Xref",
+      "code_hash": "548b62449d95d84d2ba0baede9fd5a4c",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "BYtC",
+      "code_hash": "9e53cd8984506f02f1552f45ec8e4603",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "Kclp",
+      "code_hash": "a60ee066e01210def80adb964eedb2d5",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "Hstk",
+      "code_hash": "113cd5102661d665a36fdb35fdbbefa2",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "iLit",
+      "code_hash": "c327feb169a72f9e8c1f11ef8c047f4a",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "ZHCJ",
+      "code_hash": "b4ccb72c9a16948cb4e0d2d1717cdc5b",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "ROlb",
+      "code_hash": "ee45df3695974295cedc90e28d1da79d",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "qnkX",
+      "code_hash": "1f06c989574fc28221931ce4b6feb938",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "TqIu",
+      "code_hash": "731a469099a78a4629e1081c5ddbc571",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "DnEU",
+      "code_hash": "3255a994d1270b12b381960d626f0ea1",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "ulZA",
+      "code_hash": "0b5a4bce154f0da71df5a6e13c5beb7a",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "Pvdt",
+      "code_hash": "9a08dea26a822bbd840d109d9a252c6c",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "ZBYS",
+      "code_hash": "aeab51ac1e945ec3e124b665bde144bd",
+      "outputs": [],
+      "console": []
+    }
+  ]
 }
