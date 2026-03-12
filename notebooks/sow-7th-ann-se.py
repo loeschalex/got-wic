@@ -36,26 +36,15 @@ def _():
     from got_wic.optimize import optimize, OptResult
 
     return (
-        Allocation,
         AllianceProfile,
-        BuildingFight,
-        CombatState,
-        GameConfig,
-        MonteCarloResult,
-        OptResult,
+        Allocation,
         PlayerTier,
-        SimResult,
-        apply_attrition,
-        default_alliance_profile,
         default_config,
         generate_opponent,
-        load_results,
         mo,
         np,
         optimize,
-        resolve_tick,
         run_monte_carlo,
-        save_results,
         simulate,
     )
 
@@ -88,7 +77,9 @@ def _(mo):
 
 @app.cell(hide_code=True)
 def _(mo):
-    mo.md("""## 1 · Game Config""")
+    mo.md("""
+    ## 1 · Game Config
+    """)
     return
 
 
@@ -114,7 +105,9 @@ def _(default_config, mo):
 
 @app.cell(hide_code=True)
 def _(mo):
-    mo.md("""## 2 · Alliance Profiles""")
+    mo.md("""
+    ## 2 · Alliance Profiles
+    """)
     return
 
 
@@ -128,16 +121,24 @@ def _(mo):
 
 @app.cell
 def _(mo):
-    a_whale_n = mo.ui.slider(0, 10, value=2, step=1, label="Whales (100 power, unlimited heal)")
-    a_dolphin_n = mo.ui.slider(0, 30, value=14, step=1, label="Dolphins (30 power, 8 heals)")
-    a_minnow_n = mo.ui.slider(0, 50, value=24, step=1, label="Minnows (8 power, 4 heals)")
-    a_alt_n = mo.ui.slider(0, 60, value=40, step=1, label="Alts (1 power, 2 heals)")
+    a_whale_n = mo.ui.number(value=2, start=0, label="Whales (100 power, unlimited heal)")
+    a_dolphin_n = mo.ui.number(value=14, start=0, label="Dolphins (30 power, 8 heals)")
+    a_minnow_n = mo.ui.number(value=24, start=0, label="Minnows (8 power, 4 heals)")
+    a_alt_n = mo.ui.number(value=40, start=0, label="Alts (1 power, 2 heals)")
     mo.vstack([a_whale_n, a_dolphin_n, a_minnow_n, a_alt_n])
     return a_alt_n, a_dolphin_n, a_minnow_n, a_whale_n
 
 
 @app.cell
-def _(AllianceProfile, PlayerTier, a_alt_n, a_dolphin_n, a_minnow_n, a_whale_n, mo):
+def _(
+    AllianceProfile,
+    PlayerTier,
+    a_alt_n,
+    a_dolphin_n,
+    a_minnow_n,
+    a_whale_n,
+    mo,
+):
     profile_a = AllianceProfile(
         tiers=[
             PlayerTier("whale", 100.0, -1),
@@ -161,16 +162,24 @@ def _(mo):
 
 @app.cell
 def _(mo):
-    b_whale_n = mo.ui.slider(0, 10, value=1, step=1, label="Whales")
-    b_dolphin_n = mo.ui.slider(0, 30, value=10, step=1, label="Dolphins")
-    b_minnow_n = mo.ui.slider(0, 50, value=20, step=1, label="Minnows")
-    b_alt_n = mo.ui.slider(0, 60, value=30, step=1, label="Alts")
+    b_whale_n = mo.ui.number(value=1, start=0, label="Whales")
+    b_dolphin_n = mo.ui.number(value=10, start=0, label="Dolphins")
+    b_minnow_n = mo.ui.number(value=20, start=0, label="Minnows")
+    b_alt_n = mo.ui.number(value=30, start=0, label="Alts")
     mo.vstack([b_whale_n, b_dolphin_n, b_minnow_n, b_alt_n])
     return b_alt_n, b_dolphin_n, b_minnow_n, b_whale_n
 
 
 @app.cell
-def _(AllianceProfile, PlayerTier, b_alt_n, b_dolphin_n, b_minnow_n, b_whale_n, mo):
+def _(
+    AllianceProfile,
+    PlayerTier,
+    b_alt_n,
+    b_dolphin_n,
+    b_minnow_n,
+    b_whale_n,
+    mo,
+):
     profile_b = AllianceProfile(
         tiers=[
             PlayerTier("whale", 100.0, -1),
@@ -186,7 +195,9 @@ def _(AllianceProfile, PlayerTier, b_alt_n, b_dolphin_n, b_minnow_n, b_whale_n, 
 
 @app.cell(hide_code=True)
 def _(mo):
-    mo.md("""## 3 · Opponent Behavior""")
+    mo.md("""
+    ## 3 · Opponent Behavior
+    """)
     return
 
 
@@ -215,7 +226,9 @@ def _(cfg, generate_opponent, mo, opp_aggression, opp_spread, profile_b):
 
 @app.cell(hide_code=True)
 def _(mo):
-    mo.md("""## 4 · Monte Carlo Controls""")
+    mo.md("""
+    ## 4 · Monte Carlo Controls
+    """)
     return
 
 
@@ -229,7 +242,9 @@ def _(mo):
 
 @app.cell(hide_code=True)
 def _(mo):
-    mo.md("""## 5 · Manual Allocation""")
+    mo.md("""
+    ## 5 · Manual Allocation
+    """)
     return
 
 
@@ -278,7 +293,6 @@ def _(
     mc_n_trials,
     mc_noise,
     mo,
-    np,
     opp_alloc,
     p1_armory,
     p1_greyjoy,
@@ -400,7 +414,9 @@ def _(manual_mc, mo, np):
 
 @app.cell(hide_code=True)
 def _(mo):
-    mo.md("""## 6 · Optimizer""")
+    mo.md("""
+    ## 6 · Optimizer
+    """)
     return
 
 

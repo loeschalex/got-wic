@@ -1,12 +1,11 @@
 from __future__ import annotations
 
-import math
 from dataclasses import dataclass, field
 
 import numpy as np
 
 from got_wic.combat import BuildingFight, CombatState, apply_attrition, resolve_tick
-from got_wic.model import AllianceProfile, Allocation, GameConfig, PlayerTier
+from got_wic.model import AllianceProfile, Allocation, GameConfig
 
 
 @dataclass

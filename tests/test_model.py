@@ -1,9 +1,10 @@
 from got_wic.model import (
-    Objective,
-    Dragon,
-    TreasureConfig,
-    GameConfig,
     Allocation,
+    AllianceProfile,
+    Dragon,
+    Objective,
+    PlayerTier,
+    default_alliance_profile,
     default_config,
 )
 
@@ -75,8 +76,6 @@ def test_default_config_total_objectives_count():
 
 
 # --- PlayerTier / AllianceProfile tests ---
-
-from got_wic.model import PlayerTier, AllianceProfile, default_alliance_profile
 
 
 def test_player_tier_creation():

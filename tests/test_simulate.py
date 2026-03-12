@@ -1,6 +1,5 @@
-import numpy as np
 from got_wic.model import default_config, Allocation, PlayerTier, AllianceProfile
-from got_wic.simulate import simulate, SimResult
+from got_wic.simulate import simulate
 
 
 def _make_alloc(total: int, phase_assignments: dict[str, dict[str, int]]) -> Allocation:

@@ -3,7 +3,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from itertools import product
 
-import numpy as np
 
 from got_wic.model import AllianceProfile, Allocation, GameConfig
 from got_wic.montecarlo import run_monte_carlo
