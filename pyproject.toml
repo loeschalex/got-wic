@@ -22,4 +22,5 @@ packages = ["src/got_wic"]
 dev = [
     "ruff>=0.15.5",
     "ty>=0.0.21",
+    "pytest>=8.0",
 ]
