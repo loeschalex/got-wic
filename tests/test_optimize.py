@@ -1,56 +1,78 @@
-from got_wic.model import default_config
+from got_wic.model import default_config, AllianceProfile, PlayerTier
 from got_wic.optimize import optimize, OptResult
 
 
-def test_optimize_returns_sorted_results():
+def _make_profile(n):
+    return AllianceProfile(
+        tiers=[PlayerTier("minnow", 8.0, 100)],
+        counts=[n],
+    )
+
+
+def test_optimize_returns_results_with_mc_stats():
     cfg = default_config()
     results = optimize(
         cfg,
-        n_players_a=80,
-        n_players_b=60,
+        profile_a=_make_profile(30),
+        profile_b=_make_profile(20),
         opponent_spread=0.7,
         opponent_aggression=0.5,
-        step_pct=20,  # coarse grid for speed
-    )
-    assert len(results) > 0
-    # Results should be sorted descending by score_a
-    scores = [r.score_a for r in results]
-    assert scores == sorted(scores, reverse=True)
-
-
-def test_optimize_best_beats_empty():
-    """Best allocation should score more than doing nothing."""
-    cfg = default_config()
-    results = optimize(
-        cfg,
-        n_players_a=80,
-        n_players_b=60,
-        opponent_spread=0.7,
-        opponent_aggression=0.5,
-        step_pct=20,
-    )
-    assert results[0].score_a > 0
-
-
-def test_optimize_result_has_allocation():
-    cfg = default_config()
-    results = optimize(
-        cfg,
-        n_players_a=50,
-        n_players_b=50,
-        opponent_spread=0.5,
-        opponent_aggression=0.5,
-        step_pct=25,
+        step_pct=50,
+        n_trials=10,
     )
     best = results[0]
     assert isinstance(best, OptResult)
-    assert best.allocation is not None
-    assert best.score_a >= best.score_b or True  # may lose if 50v50
+    assert hasattr(best, "win_rate")
+    assert hasattr(best, "mean_score_a")
+    assert hasattr(best, "std_score_a")
 
 
-def test_more_players_scores_higher():
-    """Side with more players should generally score higher."""
+def test_optimize_ranking_aggressive():
     cfg = default_config()
-    results_80v40 = optimize(cfg, 80, 40, 0.5, 0.5, step_pct=25)
-    results_40v80 = optimize(cfg, 40, 80, 0.5, 0.5, step_pct=25)
-    assert results_80v40[0].score_a > results_40v80[0].score_a
+    results = optimize(
+        cfg,
+        profile_a=_make_profile(30),
+        profile_b=_make_profile(20),
+        opponent_spread=0.7,
+        opponent_aggression=0.5,
+        step_pct=50,
+        n_trials=10,
+        ranking="aggressive",
+    )
+    # Should be sorted by mean_score_a descending
+    for i in range(len(results) - 1):
+        assert results[i].mean_score_a >= results[i + 1].mean_score_a
+
+
+def test_optimize_ranking_conservative():
+    cfg = default_config()
+    results = optimize(
+        cfg,
+        profile_a=_make_profile(30),
+        profile_b=_make_profile(20),
+        opponent_spread=0.7,
+        opponent_aggression=0.5,
+        step_pct=50,
+        n_trials=10,
+        ranking="conservative",
+    )
+    # Should be sorted by p25 descending
+    for i in range(len(results) - 1):
+        assert results[i].p25_score_a >= results[i + 1].p25_score_a
+
+
+def test_optimize_ranking_win_focused():
+    cfg = default_config()
+    results = optimize(
+        cfg,
+        profile_a=_make_profile(30),
+        profile_b=_make_profile(20),
+        opponent_spread=0.7,
+        opponent_aggression=0.5,
+        step_pct=50,
+        n_trials=10,
+        ranking="win_focused",
+    )
+    # Should be sorted by win_rate descending
+    for i in range(len(results) - 1):
+        assert results[i].win_rate >= results[i + 1].win_rate

@@ -4,13 +4,13 @@
     {"id": 0, "subject": "Task 0: Add PlayerTier and AllianceProfile to model.py", "status": "completed", "lastUpdated": "2026-03-12T17:55:00Z"},
     {"id": 1, "subject": "Task 1: Implement Lanchester combat resolution", "status": "completed", "lastUpdated": "2026-03-12T17:57:00Z"},
     {"id": 2, "subject": "Task 2: Add healing and attrition to combat", "status": "completed", "lastUpdated": "2026-03-12T17:59:00Z"},
-    {"id": 3, "subject": "Task 3: Update simulate.py to use Lanchester combat", "status": "pending", "blockedBy": [2]},
-    {"id": 4, "subject": "Task 4: Implement Monte Carlo orchestration", "status": "pending", "blockedBy": [3]},
-    {"id": 5, "subject": "Task 5: Update optimizer to use Monte Carlo", "status": "pending", "blockedBy": [4]},
+    {"id": 3, "subject": "Task 3: Update simulate.py to use Lanchester combat", "status": "completed", "lastUpdated": "2026-03-12T18:03:00Z"},
+    {"id": 4, "subject": "Task 4: Implement Monte Carlo orchestration", "status": "completed", "lastUpdated": "2026-03-12T18:05:00Z"},
+    {"id": 5, "subject": "Task 5: Update optimizer to use Monte Carlo", "status": "completed", "lastUpdated": "2026-03-12T18:07:00Z"},
     {"id": 6, "subject": "Task 6: Update integration tests", "status": "pending", "blockedBy": [5]},
     {"id": 7, "subject": "Task 7: Update opponent.py compatibility", "status": "pending", "blockedBy": [5]},
     {"id": 8, "subject": "Task 8: Update notebook UI", "status": "pending", "blockedBy": [6, 7]},
     {"id": 9, "subject": "Task 9: Run full test suite and final verification", "status": "pending", "blockedBy": [8]}
   ],
-  "lastUpdated": "2026-03-12T17:59:00Z"
+  "lastUpdated": "2026-03-12T18:07:00Z"
 }

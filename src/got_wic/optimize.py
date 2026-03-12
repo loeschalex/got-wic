@@ -3,18 +3,24 @@ from __future__ import annotations
 from dataclasses import dataclass
 from itertools import product
 
-from got_wic.model import GameConfig, Allocation
+import numpy as np
+
+from got_wic.model import AllianceProfile, Allocation, GameConfig
+from got_wic.montecarlo import run_monte_carlo
 from got_wic.opponent import generate_opponent
-from got_wic.simulate import simulate
 
 
 @dataclass
 class OptResult:
     allocation: Allocation
-    score_a: int
-    score_b: int
-    breakdown_a: dict[str, int]
-    breakdown_b: dict[str, int]
+    mean_score_a: float
+    std_score_a: float
+    mean_score_b: float
+    win_rate: float
+    p25_score_a: float
+    breakdown_a: dict[str, float]
+    breakdown_b: dict[str, float]
+    hopeless: bool
 
 
 def _generate_allocations(
@@ -23,7 +29,6 @@ def _generate_allocations(
     step_pct: int,
 ) -> list[Allocation]:
     """Generate candidate allocations by distributing armies across objectives in % steps."""
-    # Allocate % to groups: own_outposts, center_armory, center_hotspring, strongholds, dragon, enemy_outposts
     groups = {
         "own_outposts": "Stark Outpost",
         "center_armory": "Armory",
@@ -33,9 +38,7 @@ def _generate_allocations(
         "dragon": "dragon",
     }
 
-    # Phase 1 groups: own_outposts, center_armory, center_hotspring, enemy_outposts
     p1_keys = ["own_outposts", "center_armory", "center_hotspring", "enemy_outposts"]
-    # Phase 3 groups: all
     p3_keys = list(groups.keys())
 
     steps = list(range(0, 101, step_pct))
@@ -58,7 +61,7 @@ def _generate_allocations(
             alloc = Allocation(
                 assignments={
                     "phase1": p1_alloc,
-                    "phase2": p1_alloc,  # same as phase1 for simplicity
+                    "phase2": p1_alloc,
                     "phase3": p3_alloc,
                 },
                 total_armies=total_armies,
@@ -84,28 +87,49 @@ def _feasible_combos(steps: list[int], n: int) -> list[tuple[int, ...]]:
 
 def optimize(
     cfg: GameConfig,
-    n_players_a: int,
-    n_players_b: int,
+    profile_a: AllianceProfile,
+    profile_b: AllianceProfile,
     opponent_spread: float,
     opponent_aggression: float,
     step_pct: int = 10,
+    n_trials: int = 100,
+    noise_scale: float = 0.1,
+    ranking: str = "aggressive",
 ) -> list[OptResult]:
-    total_a = n_players_a * 3
-    total_b = n_players_b * 3
+    total_a = profile_a.total_players * 3
+    total_b = profile_b.total_players * 3
 
     opponent_alloc = generate_opponent(cfg, total_b, opponent_spread, opponent_aggression)
     candidates = _generate_allocations(cfg, total_a, step_pct)
 
     results = []
     for alloc in candidates:
-        sim = simulate(cfg, alloc, opponent_alloc)
+        mc = run_monte_carlo(
+            cfg, alloc, opponent_alloc, profile_a, profile_b,
+            n_trials=n_trials, noise_scale=noise_scale,
+        )
+        # Compute average breakdowns from a single deterministic run for display
+        from got_wic.simulate import simulate
+        det = simulate(cfg, alloc, opponent_alloc, profile_a, profile_b, noise_scale=0.0)
+
         results.append(OptResult(
             allocation=alloc,
-            score_a=sim.score_a,
-            score_b=sim.score_b,
-            breakdown_a=sim.breakdown_a,
-            breakdown_b=sim.breakdown_b,
+            mean_score_a=mc.mean_score_a,
+            std_score_a=mc.std_score_a,
+            mean_score_b=mc.mean_score_b,
+            win_rate=mc.win_rate,
+            p25_score_a=mc.percentiles.get(25, 0.0),
+            breakdown_a={k: float(v) for k, v in det.breakdown_a.items()},
+            breakdown_b={k: float(v) for k, v in det.breakdown_b.items()},
+            hopeless=mc.hopeless,
         ))
 
-    results.sort(key=lambda r: -r.score_a)
+    # Sort by ranking mode
+    if ranking == "conservative":
+        results.sort(key=lambda r: -r.p25_score_a)
+    elif ranking == "win_focused":
+        results.sort(key=lambda r: -r.win_rate)
+    else:  # aggressive (default)
+        results.sort(key=lambda r: -r.mean_score_a)
+
     return results
