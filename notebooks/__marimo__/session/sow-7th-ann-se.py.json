@@ -2,134 +2,47 @@
   "version": "1",
   "metadata": {
     "marimo_version": "0.20.4",
-    "script_metadata_hash": null
+    "script_metadata_hash": "c47d3bfe24764feaee86c3bad80bf4e5"
   },
   "cells": [
     {
-      "id": "Hbol",
-      "code_hash": "54008fb4118294f1c14a3c03beeb7558",
-      "outputs": [
-        {
-          "type": "data",
-          "data": {
-            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h1 id=\"siege-of-winterfell-strategy-simulator\">Siege of Winterfell \u2014 Strategy Simulator</h1>\n<span class=\"paragraph\">This notebook models the point-accumulation mechanics of the <strong>Siege of Winterfell</strong>\nevent in <em>Game of Thrones: Winter is Coming</em> (GTArcade).  It simulates a 60-minute\nbattle under configurable assumptions and grid-searches over deployment allocations\nto find the strategy that maximises total alliance points.</span>\n<h2 id=\"scoring-channels\">Scoring channels</h2>\n<ol>\n<li><strong>First capture</strong> \u2014 one-time points when your alliance first occupies a building.</li>\n<li><strong>Holding</strong> \u2014 points per minute for each building you control.</li>\n<li><strong>Chest escort</strong> \u2014 chests spawn at Winterfell starting at minute 12.  The first\n   yields 4 000 pts; each subsequent chest adds 1 000.  A new chest appears\n   5 min after successful delivery.  Escorting takes time and ties up deployments.</li>\n</ol>\n<h2 id=\"map-timeline\">Map timeline</h2>\n<table>\n<thead>\n<tr>\n<th>Period</th>\n<th>Minutes</th>\n<th>Available</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>1</td>\n<td>0\u201312</td>\n<td>All buildings</td>\n</tr>\n<tr>\n<td>2</td>\n<td>12\u201360</td>\n<td>All buildings; chests begin spawning</td>\n</tr>\n</tbody>\n</table>\n<h2 id=\"deployment-model\">Deployment model</h2>\n<span class=\"paragraph\">Each player contributes 3 deployments.  Deployments are split across three roles:\n<strong>building capture/hold</strong>, <strong>chest escort</strong>, and <strong>reserve</strong>.  The number of buildings\nyou can hold is bounded by <code>min(available_buildings, deployments / cost_per_building)</code>,\nfurther attenuated by the <strong>opponent strength</strong> parameter.  Chest throughput is\nconstrained by the game rule that only one chest at a time comes from Winterfell\n(next spawns after delivery + delay).</span>\n<blockquote>\n<span class=\"paragraph\"><strong>Point values below are placeholders.</strong>  Replace them with the actual in-game\nvalues for calibrated results.</span>\n</blockquote></span>"
-          }
-        }
-      ],
+      "id": "ZBYS",
+      "code_hash": null,
+      "outputs": [],
       "console": []
     },
     {
-      "id": "vblA",
-      "code_hash": "7f178acdbbc56e24c402565047e102b1",
-      "outputs": [
-        {
-          "type": "data",
-          "data": {
-            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"1-building-parameters\">1 \u00b7 Building Parameters</h2></span>"
-          }
-        }
-      ],
-      "console": []
-    },
-    {
-      "id": "bkHC",
-      "code_hash": "04f21ee3d2c378daa09da767a2bf1615",
-      "outputs": [
-        {
-          "type": "data",
-          "data": {
-            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\">Each building type: <strong>first-capture points</strong>, <strong>hold points/min</strong>,\n<strong>count</strong> on the map, <strong>capture time</strong>, and <strong>deployment cost</strong> (how many\ndeployments needed to capture and garrison one instance).</span></span>"
-          }
-        }
-      ],
-      "console": []
-    },
-    {
-      "id": "SFPL",
-      "code_hash": "d1f8bfe9ef64fb728e18f24150a6eed6",
-      "outputs": [
-        {
-          "type": "data",
-          "data": {
-            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"2-chest-escort-parameters\">2 \u00b7 Chest / Escort Parameters</h2></span>"
-          }
-        }
-      ],
-      "console": []
-    },
-    {
-      "id": "RGSE",
-      "code_hash": "ecc7a4146753364f7f5573819273ef75",
-      "outputs": [
-        {
-          "type": "data",
-          "data": {
-            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"3-force-opponent-parameters\">3 \u00b7 Force &amp; Opponent Parameters</h2></span>"
-          }
-        }
-      ],
-      "console": []
-    },
-    {
-      "id": "emfo",
-      "code_hash": "64e7c06d865c5cf91d6ba9167d13a8d7",
-      "outputs": [
-        {
-          "type": "data",
-          "data": {
-            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"4-manual-strategy-allocation\">4 \u00b7 Manual Strategy Allocation</h2>\n<span class=\"paragraph\">Set the percentage of your total deployment budget for each role.\nReserve = 100% \u2212 buildings% \u2212 chests% (clamped to \u2265 0).</span></span>"
-          }
-        }
-      ],
-      "console": []
-    },
-    {
-      "id": "nWHF",
-      "code_hash": "f78a8daa16732e10351438635b23b108",
-      "outputs": [
-        {
-          "type": "data",
-          "data": {
-            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"5-simulation-results\">5 \u00b7 Simulation Results</h2></span>"
-          }
-        }
-      ],
-      "console": []
-    },
-    {
-      "id": "Vxnm",
-      "code_hash": "c9b95dfe0cfcc7c43312fa3872bb6d82",
-      "outputs": [
-        {
-          "type": "data",
-          "data": {
-            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"6-allocation-optimiser\">6 \u00b7 Allocation Optimiser</h2>\n<span class=\"paragraph\">Grid search over <code>(% buildings, % chests)</code> in 5 % steps.</span></span>"
-          }
-        }
-      ],
-      "console": []
-    },
-    {
-      "id": "ecfG",
-      "code_hash": "202b724b8d69cca369200aa3bbe2d6a8",
-      "outputs": [
-        {
-          "type": "data",
-          "data": {
-            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"7-sensitivity-hold-success-sweep\">7 \u00b7 Sensitivity: Hold-Success Sweep</h2>\n<span class=\"paragraph\">The table below re-runs the optimiser for hold-success rates from 0.3 to 1.0,\nshowing how the optimal allocation shifts with opponent pressure.</span></span>"
-          }
-        }
-      ],
+      "id": "Pvdt",
+      "code_hash": null,
+      "outputs": [],
       "console": []
     },
     {
       "id": "aLJB",
-      "code_hash": "313511a98aef809aedc5aa732be3edb9",
+      "code_hash": null,
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "ulZA",
+      "code_hash": null,
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "ecfG",
+      "code_hash": null,
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "TqIu",
+      "code_hash": "b397ca7891c01bd1eb4ad01a890a11cd",
       "outputs": [
         {
           "type": "data",
           "data": {
-            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"8-notes-limitations\">8 \u00b7 Notes &amp; Limitations</h2>\n<ol>\n<li>The simulation is <strong>deterministic</strong>. A stochastic variant (Beta-distributed\n   hold-success per minute, Monte Carlo over uncertain point values) would\n   produce distributional outputs rather than point estimates.</li>\n<li><strong>Only one chest at a time</strong> can be in transit from Winterfell per the game\n   rules.  The model enforces this.</li>\n<li>The model does <strong>not</strong> account for combat buffs from Hot Spring / Armory,\n   troop strength decay, or healing mechanics.</li>\n<li><strong>Temporal reallocation</strong> (shifting from buildings-heavy in Period 1 to\n   chests-heavy in Period 2) is not modelled; the current version uses a\n   static allocation for the full 60 minutes.</li>\n<li>Building point values are <strong>placeholders</strong>.  Update them from in-game\n   screenshots for calibrated recommendations.</li>\n</ol></span>"
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"6-opponent-sensitivity\">6 \u00b7 Opponent Sensitivity</h2></span>"
           }
         }
       ],
@@ -137,98 +50,262 @@
     },
     {
       "id": "MJUe",
-      "code_hash": "a9d43d6ece555a5d4445d2011ca34e26",
-      "outputs": [],
+      "code_hash": "a91472f39c9641966d6068dc25ce1de4",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h1 id=\"siege-of-winterfell-7th-anniversary-strategy-optimizer\">Siege of Winterfell \u2014 7th Anniversary Strategy Optimizer</h1>\n<span class=\"paragraph\">This notebook models the <strong>Siege of Winterfell (7th Anniversary Special Edition)</strong> event.\nIt simulates a 60-minute battle and grid-searches over deployment allocations to find\nthe strategy that maximises total alliance points.</span>\n<h2 id=\"scoring-channels\">Scoring channels</h2>\n<ol>\n<li><strong>First capture</strong> \u2014 one-time points when your alliance first occupies a building.</li>\n<li><strong>Occupation</strong> \u2014 points per minute for each building you control.</li>\n<li><strong>Treasure digging</strong> \u2014 treasures spawn at random locations from minute 8. Normal = 80 pts, Rare = 120 pts.</li>\n<li><strong>Dragon escort</strong> \u2014 Twin dragons spawn at minute 12. Each worth 3,000 pts. Majority controls escort direction.</li>\n</ol>\n<h2 id=\"map-timeline\">Map timeline</h2>\n<table>\n<thead>\n<tr>\n<th>Period</th>\n<th>Minutes</th>\n<th>Events</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>1</td>\n<td>0\u20138</td>\n<td>Outposts, Armory, Hot Spring available</td>\n</tr>\n<tr>\n<td>2</td>\n<td>8\u201312</td>\n<td>Treasure spawning begins</td>\n</tr>\n<tr>\n<td>3</td>\n<td>12\u201360</td>\n<td>Strongholds unlock, Dragons spawn</td>\n</tr>\n</tbody>\n</table></span>"
+          }
+        }
+      ],
       "console": []
     },
     {
-      "id": "lEQa",
-      "code_hash": "9670d7a3d51f3388f61550b92f89eadf",
-      "outputs": [],
-      "console": []
-    },
-    {
-      "id": "PKri",
-      "code_hash": "32a7942bff54984132b2bc6946dbf772",
-      "outputs": [],
-      "console": []
-    },
-    {
-      "id": "Xref",
-      "code_hash": "548b62449d95d84d2ba0baede9fd5a4c",
-      "outputs": [],
-      "console": []
-    },
-    {
-      "id": "BYtC",
-      "code_hash": "9e53cd8984506f02f1552f45ec8e4603",
-      "outputs": [],
-      "console": []
-    },
-    {
-      "id": "Kclp",
-      "code_hash": "a60ee066e01210def80adb964eedb2d5",
-      "outputs": [],
-      "console": []
-    },
-    {
-      "id": "Hstk",
-      "code_hash": "113cd5102661d665a36fdb35fdbbefa2",
-      "outputs": [],
-      "console": []
-    },
-    {
-      "id": "iLit",
-      "code_hash": "c327feb169a72f9e8c1f11ef8c047f4a",
-      "outputs": [],
-      "console": []
-    },
-    {
-      "id": "ZHCJ",
-      "code_hash": "b4ccb72c9a16948cb4e0d2d1717cdc5b",
-      "outputs": [],
+      "id": "Hbol",
+      "code_hash": "6f583e7953eaec3ce76295ae4c06ba72",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
       "console": []
     },
     {
       "id": "ROlb",
-      "code_hash": "ee45df3695974295cedc90e28d1da79d",
-      "outputs": [],
+      "code_hash": "752f480d95bd0d8a9f5bd4b5f4fc12b7",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"5-player-ratio-sweep\">5 \u00b7 Player Ratio Sweep</h2></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "lEQa",
+      "code_hash": "d08437b04ccf00198ee9ebeace70d5fb",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/html": "<div style='display: flex;flex: 1;flex-direction: column;justify-content: flex-start;align-items: normal;flex-wrap: nowrap;gap: 0.5rem'><marimo-ui-element object-id='lEQa-0' random-id='086eaf20-b1be-4b6a-6c93-d8e795045d1a'><marimo-slider data-initial-value='80' data-label='&quot;&lt;span class=&#92;&quot;markdown prose dark:prose-invert contents&#92;&quot;&gt;&lt;span class=&#92;&quot;paragraph&#92;&quot;&gt;Side A players&lt;/span&gt;&lt;/span&gt;&quot;' data-start='10' data-stop='100' data-step='5' data-steps='[]' data-debounce='false' data-disabled='false' data-orientation='&quot;horizontal&quot;' data-show-value='false' data-include-input='false' data-full-width='false'></marimo-slider></marimo-ui-element><marimo-ui-element object-id='lEQa-1' random-id='efd7e337-e660-4ebd-a9fe-49f79c9aaa35'><marimo-slider data-initial-value='60' data-label='&quot;&lt;span class=&#92;&quot;markdown prose dark:prose-invert contents&#92;&quot;&gt;&lt;span class=&#92;&quot;paragraph&#92;&quot;&gt;Side B players&lt;/span&gt;&lt;/span&gt;&quot;' data-start='10' data-stop='100' data-step='5' data-steps='[]' data-debounce='false' data-disabled='false' data-orientation='&quot;horizontal&quot;' data-show-value='false' data-include-input='false' data-full-width='false'></marimo-slider></marimo-ui-element></div>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "bkHC",
+      "code_hash": "c37b8e5b10f60453ecc3fd68afc838a2",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/html": "<marimo-ui-element object-id='bkHC-0' random-id='3874dd80-fe33-e813-b206-206600a02cf7'><marimo-table data-initial-value='[]' data-label='&quot;&lt;span class=&#92;&quot;markdown prose dark:prose-invert contents&#92;&quot;&gt;&lt;span class=&#92;&quot;paragraph&#92;&quot;&gt;Building parameters (from default config)&lt;/span&gt;&lt;/span&gt;&quot;' data-data='&quot;[{&#92;&quot;Building&#92;&quot;:&#92;&quot;Stark Outpost&#92;&quot;,&#92;&quot;Count&#92;&quot;:2,&#92;&quot;First Capture&#92;&quot;:200,&#92;&quot;Hold pts/min&#92;&quot;:80,&#92;&quot;Opens at&#92;&quot;:&#92;&quot;0 min&#92;&quot;,&#92;&quot;Zone&#92;&quot;:&#92;&quot;near_stark&#92;&quot;},{&#92;&quot;Building&#92;&quot;:&#92;&quot;Greyjoy Outpost&#92;&quot;,&#92;&quot;Count&#92;&quot;:2,&#92;&quot;First Capture&#92;&quot;:200,&#92;&quot;Hold pts/min&#92;&quot;:80,&#92;&quot;Opens at&#92;&quot;:&#92;&quot;0 min&#92;&quot;,&#92;&quot;Zone&#92;&quot;:&#92;&quot;near_greyjoy&#92;&quot;},{&#92;&quot;Building&#92;&quot;:&#92;&quot;Armory&#92;&quot;,&#92;&quot;Count&#92;&quot;:1,&#92;&quot;First Capture&#92;&quot;:400,&#92;&quot;Hold pts/min&#92;&quot;:120,&#92;&quot;Opens at&#92;&quot;:&#92;&quot;0 min&#92;&quot;,&#92;&quot;Zone&#92;&quot;:&#92;&quot;center&#92;&quot;},{&#92;&quot;Building&#92;&quot;:&#92;&quot;Hot Spring&#92;&quot;,&#92;&quot;Count&#92;&quot;:1,&#92;&quot;First Capture&#92;&quot;:400,&#92;&quot;Hold pts/min&#92;&quot;:120,&#92;&quot;Opens at&#92;&quot;:&#92;&quot;0 min&#92;&quot;,&#92;&quot;Zone&#92;&quot;:&#92;&quot;center&#92;&quot;},{&#92;&quot;Building&#92;&quot;:&#92;&quot;Stronghold&#92;&quot;,&#92;&quot;Count&#92;&quot;:4,&#92;&quot;First Capture&#92;&quot;:600,&#92;&quot;Hold pts/min&#92;&quot;:180,&#92;&quot;Opens at&#92;&quot;:&#92;&quot;12 min&#92;&quot;,&#92;&quot;Zone&#92;&quot;:&#92;&quot;mid&#92;&quot;}]&quot;' data-total-rows='5' data-total-columns='6' data-max-columns='50' data-banner-text='&quot;&quot;' data-pagination='false' data-page-size='10' data-selection='&quot;multi&quot;' data-show-filters='false' data-show-download='false' data-show-column-summaries='false' data-show-data-types='true' data-show-page-size-selector='false' data-show-column-explorer='true' data-show-chart-builder='true' data-row-headers='[]' data-has-stable-row-id='false' data-lazy='false' data-preload='false' data-download-file-name='&quot;download&quot;'></marimo-table></marimo-ui-element>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "Xref",
+      "code_hash": "f0b87698e588c55cef18843985271f50",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/html": "<div style='display: flex;flex: 1;flex-direction: column;justify-content: flex-start;align-items: normal;flex-wrap: nowrap;gap: 0.5rem'><marimo-ui-element object-id='Xref-0' random-id='c1ada546-5ddb-8aa9-257a-3cb1f2231c0a'><marimo-slider data-initial-value='0.7' data-label='&quot;&lt;span class=&#92;&quot;markdown prose dark:prose-invert contents&#92;&quot;&gt;&lt;span class=&#92;&quot;paragraph&#92;&quot;&gt;Opponent spread (0=concentrated, 1=even)&lt;/span&gt;&lt;/span&gt;&quot;' data-start='0.0' data-stop='1.0' data-step='0.05' data-steps='[]' data-debounce='false' data-disabled='false' data-orientation='&quot;horizontal&quot;' data-show-value='false' data-include-input='false' data-full-width='false'></marimo-slider></marimo-ui-element><marimo-ui-element object-id='Xref-1' random-id='84363421-2a18-c921-1733-1c42b27cd549'><marimo-slider data-initial-value='0.5' data-label='&quot;&lt;span class=&#92;&quot;markdown prose dark:prose-invert contents&#92;&quot;&gt;&lt;span class=&#92;&quot;paragraph&#92;&quot;&gt;Opponent aggression (0=defensive, 1=aggressive)&lt;/span&gt;&lt;/span&gt;&quot;' data-start='0.0' data-stop='1.0' data-step='0.05' data-steps='[]' data-debounce='false' data-disabled='false' data-orientation='&quot;horizontal&quot;' data-show-value='false' data-include-input='false' data-full-width='false'></marimo-slider></marimo-ui-element></div>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "SFPL",
+      "code_hash": "f26312fa7e3b83eb9a2d6485ff8f7f47",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/html": "<div style='display: flex;flex: 1;flex-direction: column;justify-content: flex-start;align-items: normal;flex-wrap: nowrap;gap: 0.5rem'><span class=\"markdown prose dark:prose-invert contents\"><h3 id=\"opponent-allocation-preview\">Opponent allocation preview</h3></span><marimo-ui-element object-id='SFPL-0' random-id='f0ecd7a2-09b9-1460-d5a2-c8baadd8f649'><marimo-table data-initial-value='[]' data-label='&quot;&lt;span class=&#92;&quot;markdown prose dark:prose-invert contents&#92;&quot;&gt;&lt;span class=&#92;&quot;paragraph&#92;&quot;&gt;Total opponent armies: 180&lt;/span&gt;&lt;/span&gt;&quot;' data-data='&quot;[{&#92;&quot;Phase&#92;&quot;:&#92;&quot;phase1&#92;&quot;,&#92;&quot;Target&#92;&quot;:&#92;&quot;Armory&#92;&quot;,&#92;&quot;Armies&#92;&quot;:45},{&#92;&quot;Phase&#92;&quot;:&#92;&quot;phase1&#92;&quot;,&#92;&quot;Target&#92;&quot;:&#92;&quot;Greyjoy Outpost&#92;&quot;,&#92;&quot;Armies&#92;&quot;:48},{&#92;&quot;Phase&#92;&quot;:&#92;&quot;phase1&#92;&quot;,&#92;&quot;Target&#92;&quot;:&#92;&quot;Hot Spring&#92;&quot;,&#92;&quot;Armies&#92;&quot;:44},{&#92;&quot;Phase&#92;&quot;:&#92;&quot;phase1&#92;&quot;,&#92;&quot;Target&#92;&quot;:&#92;&quot;Stark Outpost&#92;&quot;,&#92;&quot;Armies&#92;&quot;:43},{&#92;&quot;Phase&#92;&quot;:&#92;&quot;phase2&#92;&quot;,&#92;&quot;Target&#92;&quot;:&#92;&quot;Armory&#92;&quot;,&#92;&quot;Armies&#92;&quot;:45},{&#92;&quot;Phase&#92;&quot;:&#92;&quot;phase2&#92;&quot;,&#92;&quot;Target&#92;&quot;:&#92;&quot;Greyjoy Outpost&#92;&quot;,&#92;&quot;Armies&#92;&quot;:48},{&#92;&quot;Phase&#92;&quot;:&#92;&quot;phase2&#92;&quot;,&#92;&quot;Target&#92;&quot;:&#92;&quot;Hot Spring&#92;&quot;,&#92;&quot;Armies&#92;&quot;:44},{&#92;&quot;Phase&#92;&quot;:&#92;&quot;phase2&#92;&quot;,&#92;&quot;Target&#92;&quot;:&#92;&quot;Stark Outpost&#92;&quot;,&#92;&quot;Armies&#92;&quot;:43},{&#92;&quot;Phase&#92;&quot;:&#92;&quot;phase3&#92;&quot;,&#92;&quot;Target&#92;&quot;:&#92;&quot;Armory&#92;&quot;,&#92;&quot;Armies&#92;&quot;:32},{&#92;&quot;Phase&#92;&quot;:&#92;&quot;phase3&#92;&quot;,&#92;&quot;Target&#92;&quot;:&#92;&quot;Greyjoy Outpost&#92;&quot;,&#92;&quot;Armies&#92;&quot;:33}]&quot;' data-total-rows='14' data-total-columns='3' data-max-columns='50' data-banner-text='&quot;&quot;' data-pagination='true' data-page-size='10' data-selection='&quot;multi&quot;' data-show-filters='false' data-show-download='false' data-show-column-summaries='true' data-show-data-types='true' data-show-page-size-selector='true' data-show-column-explorer='true' data-show-chart-builder='true' data-row-headers='[]' data-has-stable-row-id='false' data-lazy='false' data-preload='false' data-download-file-name='&quot;opp_rows&quot;'></marimo-table></marimo-ui-element></div>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "PKri",
+      "code_hash": "26ae9c3c975bf2bc0312588424fb6bb5",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"2-opponent-profile\">2 \u00b7 Opponent Profile</h2></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "RGSE",
+      "code_hash": "aa82344b36107fb83605e058f53ba296",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\">Set the percentage of your total armies for each objective group per phase.\nPhase 1\u20132 share the same allocation. Phase 3 has its own (strongholds + dragon unlock).</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "Kclp",
+      "code_hash": "eb9b2c0c85d16f185e4159e45cebeb40",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/html": "<div style='display: flex;flex: 1;flex-direction: column;justify-content: flex-start;align-items: normal;flex-wrap: nowrap;gap: 0.5rem'><marimo-ui-element object-id='Kclp-0' random-id='f800b9c0-4d69-3634-480e-28b699ab197f'><marimo-slider data-initial-value='30' data-label='&quot;&lt;span class=&#92;&quot;markdown prose dark:prose-invert contents&#92;&quot;&gt;&lt;span class=&#92;&quot;paragraph&#92;&quot;&gt;Phase 1-2: Stark Outpost %&lt;/span&gt;&lt;/span&gt;&quot;' data-start='0' data-stop='100' data-step='5' data-steps='[]' data-debounce='false' data-disabled='false' data-orientation='&quot;horizontal&quot;' data-show-value='false' data-include-input='false' data-full-width='false'></marimo-slider></marimo-ui-element><marimo-ui-element object-id='Kclp-1' random-id='da28572b-9e58-d321-2cbb-f256e20ae393'><marimo-slider data-initial-value='20' data-label='&quot;&lt;span class=&#92;&quot;markdown prose dark:prose-invert contents&#92;&quot;&gt;&lt;span class=&#92;&quot;paragraph&#92;&quot;&gt;Phase 1-2: Armory %&lt;/span&gt;&lt;/span&gt;&quot;' data-start='0' data-stop='100' data-step='5' data-steps='[]' data-debounce='false' data-disabled='false' data-orientation='&quot;horizontal&quot;' data-show-value='false' data-include-input='false' data-full-width='false'></marimo-slider></marimo-ui-element><marimo-ui-element object-id='Kclp-2' random-id='45164428-7ed3-5374-4f08-9bdfe01d142f'><marimo-slider data-initial-value='20' data-label='&quot;&lt;span class=&#92;&quot;markdown prose dark:prose-invert contents&#92;&quot;&gt;&lt;span class=&#92;&quot;paragraph&#92;&quot;&gt;Phase 1-2: Hot Spring %&lt;/span&gt;&lt;/span&gt;&quot;' data-start='0' data-stop='100' data-step='5' data-steps='[]' data-debounce='false' data-disabled='false' data-orientation='&quot;horizontal&quot;' data-show-value='false' data-include-input='false' data-full-width='false'></marimo-slider></marimo-ui-element><marimo-ui-element object-id='Kclp-3' random-id='2474f2d0-26d3-1697-e790-af6b97457795'><marimo-slider data-initial-value='10' data-label='&quot;&lt;span class=&#92;&quot;markdown prose dark:prose-invert contents&#92;&quot;&gt;&lt;span class=&#92;&quot;paragraph&#92;&quot;&gt;Phase 1-2: Greyjoy Outpost %&lt;/span&gt;&lt;/span&gt;&quot;' data-start='0' data-stop='100' data-step='5' data-steps='[]' data-debounce='false' data-disabled='false' data-orientation='&quot;horizontal&quot;' data-show-value='false' data-include-input='false' data-full-width='false'></marimo-slider></marimo-ui-element></div>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "emfo",
+      "code_hash": "3b8691c9ee48bd1ed7dad69a7123474d",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/html": "<div style='display: flex;flex: 1;flex-direction: column;justify-content: flex-start;align-items: normal;flex-wrap: nowrap;gap: 0.5rem'><marimo-ui-element object-id='emfo-0' random-id='b02b4c8d-18c4-2b3f-1878-2731e350ae4f'><marimo-slider data-initial-value='10' data-label='&quot;&lt;span class=&#92;&quot;markdown prose dark:prose-invert contents&#92;&quot;&gt;&lt;span class=&#92;&quot;paragraph&#92;&quot;&gt;Phase 3: Stark Outpost %&lt;/span&gt;&lt;/span&gt;&quot;' data-start='0' data-stop='100' data-step='5' data-steps='[]' data-debounce='false' data-disabled='false' data-orientation='&quot;horizontal&quot;' data-show-value='false' data-include-input='false' data-full-width='false'></marimo-slider></marimo-ui-element><marimo-ui-element object-id='emfo-1' random-id='060fb43c-d4af-1336-1569-4ad9cbe73c23'><marimo-slider data-initial-value='10' data-label='&quot;&lt;span class=&#92;&quot;markdown prose dark:prose-invert contents&#92;&quot;&gt;&lt;span class=&#92;&quot;paragraph&#92;&quot;&gt;Phase 3: Armory %&lt;/span&gt;&lt;/span&gt;&quot;' data-start='0' data-stop='100' data-step='5' data-steps='[]' data-debounce='false' data-disabled='false' data-orientation='&quot;horizontal&quot;' data-show-value='false' data-include-input='false' data-full-width='false'></marimo-slider></marimo-ui-element><marimo-ui-element object-id='emfo-2' random-id='47a3f759-98d4-9b6f-71f8-fd734bedd143'><marimo-slider data-initial-value='10' data-label='&quot;&lt;span class=&#92;&quot;markdown prose dark:prose-invert contents&#92;&quot;&gt;&lt;span class=&#92;&quot;paragraph&#92;&quot;&gt;Phase 3: Hot Spring %&lt;/span&gt;&lt;/span&gt;&quot;' data-start='0' data-stop='100' data-step='5' data-steps='[]' data-debounce='false' data-disabled='false' data-orientation='&quot;horizontal&quot;' data-show-value='false' data-include-input='false' data-full-width='false'></marimo-slider></marimo-ui-element><marimo-ui-element object-id='emfo-3' random-id='41e31836-16a7-ada0-abda-1b22e159d2e4'><marimo-slider data-initial-value='30' data-label='&quot;&lt;span class=&#92;&quot;markdown prose dark:prose-invert contents&#92;&quot;&gt;&lt;span class=&#92;&quot;paragraph&#92;&quot;&gt;Phase 3: Stronghold %&lt;/span&gt;&lt;/span&gt;&quot;' data-start='0' data-stop='100' data-step='5' data-steps='[]' data-debounce='false' data-disabled='false' data-orientation='&quot;horizontal&quot;' data-show-value='false' data-include-input='false' data-full-width='false'></marimo-slider></marimo-ui-element><marimo-ui-element object-id='emfo-4' random-id='984da534-430c-2ac7-0dd2-bb3834cb24d0'><marimo-slider data-initial-value='10' data-label='&quot;&lt;span class=&#92;&quot;markdown prose dark:prose-invert contents&#92;&quot;&gt;&lt;span class=&#92;&quot;paragraph&#92;&quot;&gt;Phase 3: Greyjoy Outpost %&lt;/span&gt;&lt;/span&gt;&quot;' data-start='0' data-stop='100' data-step='5' data-steps='[]' data-debounce='false' data-disabled='false' data-orientation='&quot;horizontal&quot;' data-show-value='false' data-include-input='false' data-full-width='false'></marimo-slider></marimo-ui-element><marimo-ui-element object-id='emfo-5' random-id='19428a52-2d82-3d69-c817-4a16e3fcc079'><marimo-slider data-initial-value='20' data-label='&quot;&lt;span class=&#92;&quot;markdown prose dark:prose-invert contents&#92;&quot;&gt;&lt;span class=&#92;&quot;paragraph&#92;&quot;&gt;Phase 3: Dragon %&lt;/span&gt;&lt;/span&gt;&quot;' data-start='0' data-stop='100' data-step='5' data-steps='[]' data-debounce='false' data-disabled='false' data-orientation='&quot;horizontal&quot;' data-show-value='false' data-include-input='false' data-full-width='false'></marimo-slider></marimo-ui-element></div>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "Hstk",
+      "code_hash": "f5a05098f3c4e85aa76bf1aec5423433",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h3 id=\"manual-allocation-result\">Manual Allocation Result</h3>\n<table>\n<thead>\n<tr>\n<th>Metric</th>\n<th style=\"text-align: right;\">Side A</th>\n<th style=\"text-align: right;\">Side B</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><strong>Total Score</strong></td>\n<td style=\"text-align: right;\"><strong>48,960</strong></td>\n<td style=\"text-align: right;\"><strong>30,400</strong></td>\n</tr>\n<tr>\n<td>First capture</td>\n<td style=\"text-align: right;\">3,600</td>\n<td style=\"text-align: right;\">1,600</td>\n</tr>\n<tr>\n<td>Hold</td>\n<td style=\"text-align: right;\">39,360</td>\n<td style=\"text-align: right;\">28,800</td>\n</tr>\n<tr>\n<td>Dragon</td>\n<td style=\"text-align: right;\">6,000</td>\n<td style=\"text-align: right;\">0</td>\n</tr>\n<tr>\n<td>Treasure</td>\n<td style=\"text-align: right;\">0</td>\n<td style=\"text-align: right;\">0</td>\n</tr>\n<tr>\n<td></td>\n<td style=\"text-align: right;\"></td>\n<td style=\"text-align: right;\"></td>\n</tr>\n<tr>\n<td>Phase 1-2 used</td>\n<td style=\"text-align: right;\">80%</td>\n<td style=\"text-align: right;\"></td>\n</tr>\n<tr>\n<td>Phase 3 used</td>\n<td style=\"text-align: right;\">90%</td>\n<td style=\"text-align: right;\"></td>\n</tr>\n<tr>\n<td><strong>Margin</strong></td>\n<td style=\"text-align: right;\"><strong>+18,560</strong></td>\n<td style=\"text-align: right;\"></td>\n</tr>\n</tbody>\n</table></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "vblA",
+      "code_hash": "dcc3ada936196fff3f27e09f1603ad85",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"1-config\">1 \u00b7 Config</h2></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "iLit",
+      "code_hash": "501eb88e5a412ef1d6c5cb6ed1f9aa73",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/html": "<marimo-ui-element object-id='iLit-0' random-id='fd3b9a18-686b-e5d5-97d0-134d2786fbda'><marimo-slider data-initial-value='25' data-label='&quot;&lt;span class=&#92;&quot;markdown prose dark:prose-invert contents&#92;&quot;&gt;&lt;span class=&#92;&quot;paragraph&#92;&quot;&gt;Grid step % (smaller = slower but more precise)&lt;/span&gt;&lt;/span&gt;&quot;' data-start='10' data-stop='50' data-step='5' data-steps='[]' data-debounce='false' data-disabled='false' data-orientation='&quot;horizontal&quot;' data-show-value='false' data-include-input='false' data-full-width='false'></marimo-slider></marimo-ui-element>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "ZHCJ",
+      "code_hash": "ac5433cf77c54b341581d01f696c5f61",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/html": "<div style='display: flex;flex: 1;flex-direction: column;justify-content: flex-start;align-items: normal;flex-wrap: nowrap;gap: 0.5rem'><span class=\"markdown prose dark:prose-invert contents\"><h3 id=\"top-10-allocations-80v60\">Top 10 Allocations (80v60)</h3>\n<span class=\"paragraph\"><strong>Best score: 66,640</strong> (margin: +54,320)</span></span><marimo-ui-element object-id='ZHCJ-0' random-id='38746f55-dd56-690e-ee19-02b151dbbce5'><marimo-table data-initial-value='[]' data-label='&quot;&lt;span class=&#92;&quot;markdown prose dark:prose-invert contents&#92;&quot;&gt;&lt;span class=&#92;&quot;paragraph&#92;&quot;&gt;Armies per objective&lt;/span&gt;&lt;/span&gt;&quot;' data-data='&quot;[{&#92;&quot;#&#92;&quot;:1,&#92;&quot;Score A&#92;&quot;:&#92;&quot;66,640&#92;&quot;,&#92;&quot;Score B&#92;&quot;:&#92;&quot;12,320&#92;&quot;,&#92;&quot;Margin&#92;&quot;:&#92;&quot;+54,320&#92;&quot;,&#92;&quot;P1 Stark&#92;&quot;:60,&#92;&quot;P1 Armory&#92;&quot;:60,&#92;&quot;P1 HotSpr&#92;&quot;:60,&#92;&quot;P1 Greyjoy&#92;&quot;:60,&#92;&quot;P3 Stark&#92;&quot;:60,&#92;&quot;P3 Armory&#92;&quot;:0,&#92;&quot;P3 HotSpr&#92;&quot;:0,&#92;&quot;P3 Strong&#92;&quot;:60,&#92;&quot;P3 Greyjoy&#92;&quot;:60,&#92;&quot;P3 Dragon&#92;&quot;:60},{&#92;&quot;#&#92;&quot;:2,&#92;&quot;Score A&#92;&quot;:&#92;&quot;66,400&#92;&quot;,&#92;&quot;Score B&#92;&quot;:&#92;&quot;12,160&#92;&quot;,&#92;&quot;Margin&#92;&quot;:&#92;&quot;+54,240&#92;&quot;,&#92;&quot;P1 Stark&#92;&quot;:60,&#92;&quot;P1 Armory&#92;&quot;:60,&#92;&quot;P1 HotSpr&#92;&quot;:60,&#92;&quot;P1 Greyjoy&#92;&quot;:60,&#92;&quot;P3 Stark&#92;&quot;:60,&#92;&quot;P3 Armory&#92;&quot;:0,&#92;&quot;P3 HotSpr&#92;&quot;:60,&#92;&quot;P3 Strong&#92;&quot;:60,&#92;&quot;P3 Greyjoy&#92;&quot;:60,&#92;&quot;P3 Dragon&#92;&quot;:0},{&#92;&quot;#&#92;&quot;:3,&#92;&quot;Score A&#92;&quot;:&#92;&quot;66,400&#92;&quot;,&#92;&quot;Score B&#92;&quot;:&#92;&quot;12,160&#92;&quot;,&#92;&quot;Margin&#92;&quot;:&#92;&quot;+54,240&#92;&quot;,&#92;&quot;P1 Stark&#92;&quot;:60,&#92;&quot;P1 Armory&#92;&quot;:60,&#92;&quot;P1 HotSpr&#92;&quot;:60,&#92;&quot;P1 Greyjoy&#92;&quot;:60,&#92;&quot;P3 Stark&#92;&quot;:60,&#92;&quot;P3 Armory&#92;&quot;:60,&#92;&quot;P3 HotSpr&#92;&quot;:0,&#92;&quot;P3 Strong&#92;&quot;:60,&#92;&quot;P3 Greyjoy&#92;&quot;:60,&#92;&quot;P3 Dragon&#92;&quot;:0},{&#92;&quot;#&#92;&quot;:4,&#92;&quot;Score A&#92;&quot;:&#92;&quot;64,960&#92;&quot;,&#92;&quot;Score B&#92;&quot;:&#92;&quot;14,000&#92;&quot;,&#92;&quot;Margin&#92;&quot;:&#92;&quot;+50,960&#92;&quot;,&#92;&quot;P1 Stark&#92;&quot;:60,&#92;&quot;P1 Armory&#92;&quot;:0,&#92;&quot;P1 HotSpr&#92;&quot;:60,&#92;&quot;P1 Greyjoy&#92;&quot;:60,&#92;&quot;P3 Stark&#92;&quot;:60,&#92;&quot;P3 Armory&#92;&quot;:60,&#92;&quot;P3 HotSpr&#92;&quot;:0,&#92;&quot;P3 Strong&#92;&quot;:60,&#92;&quot;P3 Greyjoy&#92;&quot;:60,&#92;&quot;P3 Dragon&#92;&quot;:0},{&#92;&quot;#&#92;&quot;:5,&#92;&quot;Score A&#92;&quot;:&#92;&quot;64,960&#92;&quot;,&#92;&quot;Score B&#92;&quot;:&#92;&quot;14,000&#92;&quot;,&#92;&quot;Margin&#92;&quot;:&#92;&quot;+50,960&#92;&quot;,&#92;&quot;P1 Stark&#92;&quot;:60,&#92;&quot;P1 Armory&#92;&quot;:0,&#92;&quot;P1 HotSpr&#92;&quot;:60,&#92;&quot;P1 Greyjoy&#92;&quot;:120,&#92;&quot;P3 Stark&#92;&quot;:60,&#92;&quot;P3 Armory&#92;&quot;:60,&#92;&quot;P3 HotSpr&#92;&quot;:0,&#92;&quot;P3 Strong&#92;&quot;:60,&#92;&quot;P3 Greyjoy&#92;&quot;:60,&#92;&quot;P3 Dragon&#92;&quot;:0},{&#92;&quot;#&#92;&quot;:6,&#92;&quot;Score A&#92;&quot;:&#92;&quot;64,960&#92;&quot;,&#92;&quot;Score B&#92;&quot;:&#92;&quot;14,000&#92;&quot;,&#92;&quot;Margin&#92;&quot;:&#92;&quot;+50,960&#92;&quot;,&#92;&quot;P1 Stark&#92;&quot;:60,&#92;&quot;P1 Armory&#92;&quot;:0,&#92;&quot;P1 HotSpr&#92;&quot;:120,&#92;&quot;P1 Greyjoy&#92;&quot;:60,&#92;&quot;P3 Stark&#92;&quot;:60,&#92;&quot;P3 Armory&#92;&quot;:60,&#92;&quot;P3 HotSpr&#92;&quot;:0,&#92;&quot;P3 Strong&#92;&quot;:60,&#92;&quot;P3 Greyjoy&#92;&quot;:60,&#92;&quot;P3 Dragon&#92;&quot;:0},{&#92;&quot;#&#92;&quot;:7,&#92;&quot;Score A&#92;&quot;:&#92;&quot;64,960&#92;&quot;,&#92;&quot;Score B&#92;&quot;:&#92;&quot;14,000&#92;&quot;,&#92;&quot;Margin&#92;&quot;:&#92;&quot;+50,960&#92;&quot;,&#92;&quot;P1 Stark&#92;&quot;:60,&#92;&quot;P1 Armory&#92;&quot;:60,&#92;&quot;P1 HotSpr&#92;&quot;:0,&#92;&quot;P1 Greyjoy&#92;&quot;:60,&#92;&quot;P3 Stark&#92;&quot;:60,&#92;&quot;P3 Armory&#92;&quot;:0,&#92;&quot;P3 HotSpr&#92;&quot;:60,&#92;&quot;P3 Strong&#92;&quot;:60,&#92;&quot;P3 Greyjoy&#92;&quot;:60,&#92;&quot;P3 Dragon&#92;&quot;:0},{&#92;&quot;#&#92;&quot;:8,&#92;&quot;Score A&#92;&quot;:&#92;&quot;64,960&#92;&quot;,&#92;&quot;Score B&#92;&quot;:&#92;&quot;14,000&#92;&quot;,&#92;&quot;Margin&#92;&quot;:&#92;&quot;+50,960&#92;&quot;,&#92;&quot;P1 Stark&#92;&quot;:60,&#92;&quot;P1 Armory&#92;&quot;:60,&#92;&quot;P1 HotSpr&#92;&quot;:0,&#92;&quot;P1 Greyjoy&#92;&quot;:120,&#92;&quot;P3 Stark&#92;&quot;:60,&#92;&quot;P3 Armory&#92;&quot;:0,&#92;&quot;P3 HotSpr&#92;&quot;:60,&#92;&quot;P3 Strong&#92;&quot;:60,&#92;&quot;P3 Greyjoy&#92;&quot;:60,&#92;&quot;P3 Dragon&#92;&quot;:0},{&#92;&quot;#&#92;&quot;:9,&#92;&quot;Score A&#92;&quot;:&#92;&quot;64,960&#92;&quot;,&#92;&quot;Score B&#92;&quot;:&#92;&quot;14,000&#92;&quot;,&#92;&quot;Margin&#92;&quot;:&#92;&quot;+50,960&#92;&quot;,&#92;&quot;P1 Stark&#92;&quot;:60,&#92;&quot;P1 Armory&#92;&quot;:120,&#92;&quot;P1 HotSpr&#92;&quot;:0,&#92;&quot;P1 Greyjoy&#92;&quot;:60,&#92;&quot;P3 Stark&#92;&quot;:60,&#92;&quot;P3 Armory&#92;&quot;:0,&#92;&quot;P3 HotSpr&#92;&quot;:60,&#92;&quot;P3 Strong&#92;&quot;:60,&#92;&quot;P3 Greyjoy&#92;&quot;:60,&#92;&quot;P3 Dragon&#92;&quot;:0},{&#92;&quot;#&#92;&quot;:10,&#92;&quot;Score A&#92;&quot;:&#92;&quot;64,960&#92;&quot;,&#92;&quot;Score B&#92;&quot;:&#92;&quot;14,000&#92;&quot;,&#92;&quot;Margin&#92;&quot;:&#92;&quot;+50,960&#92;&quot;,&#92;&quot;P1 Stark&#92;&quot;:120,&#92;&quot;P1 Armory&#92;&quot;:0,&#92;&quot;P1 HotSpr&#92;&quot;:60,&#92;&quot;P1 Greyjoy&#92;&quot;:60,&#92;&quot;P3 Stark&#92;&quot;:60,&#92;&quot;P3 Armory&#92;&quot;:60,&#92;&quot;P3 HotSpr&#92;&quot;:0,&#92;&quot;P3 Strong&#92;&quot;:60,&#92;&quot;P3 Greyjoy&#92;&quot;:60,&#92;&quot;P3 Dragon&#92;&quot;:0}]&quot;' data-total-rows='10' data-total-columns='14' data-max-columns='50' data-banner-text='&quot;&quot;' data-pagination='false' data-page-size='10' data-selection='&quot;multi&quot;' data-show-filters='false' data-show-download='false' data-show-column-summaries='false' data-show-data-types='true' data-show-page-size-selector='true' data-show-column-explorer='true' data-show-chart-builder='true' data-row-headers='[]' data-has-stable-row-id='false' data-lazy='false' data-preload='false' data-download-file-name='&quot;opt_rows&quot;'></marimo-table></marimo-ui-element></div>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "BYtC",
+      "code_hash": "368241e12a93371be28918fba205f403",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"3-manual-allocation\">3 \u00b7 Manual Allocation</h2></span>"
+          }
+        }
+      ],
       "console": []
     },
     {
       "id": "qnkX",
-      "code_hash": "1f06c989574fc28221931ce4b6feb938",
-      "outputs": [],
+      "code_hash": "7cbbb51fe417e3d7bd945adaca198ef2",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/html": "<div style='display: flex;flex: 1;flex-direction: column;justify-content: flex-start;align-items: normal;flex-wrap: nowrap;gap: 0.5rem'><span class=\"markdown prose dark:prose-invert contents\"><h3 id=\"optimal-allocation-as-player-ratio-varies\">Optimal allocation as player ratio varies</h3></span><marimo-ui-element object-id='qnkX-0' random-id='93c58348-cf1a-2885-053e-6f8351e912be'><marimo-table data-initial-value='[]' data-label='&quot;&lt;span class=&#92;&quot;markdown prose dark:prose-invert contents&#92;&quot;&gt;&lt;span class=&#92;&quot;paragraph&#92;&quot;&gt;Best allocation per ratio&lt;/span&gt;&lt;/span&gt;&quot;' data-data='&quot;[{&#92;&quot;Ratio&#92;&quot;:&#92;&quot;30v70&#92;&quot;,&#92;&quot;Score A&#92;&quot;:&#92;&quot;47,360&#92;&quot;,&#92;&quot;Score B&#92;&quot;:&#92;&quot;31,600&#92;&quot;,&#92;&quot;Margin&#92;&quot;:&#92;&quot;+15,760&#92;&quot;,&#92;&quot;P1 Stark&#92;&quot;:0,&#92;&quot;P1 Armory&#92;&quot;:0,&#92;&quot;P3 Strong&#92;&quot;:45,&#92;&quot;P3 Dragon&#92;&quot;:0,&#92;&quot;P3 Greyjoy&#92;&quot;:0},{&#92;&quot;Ratio&#92;&quot;:&#92;&quot;40v60&#92;&quot;,&#92;&quot;Score A&#92;&quot;:&#92;&quot;49,280&#92;&quot;,&#92;&quot;Score B&#92;&quot;:&#92;&quot;29,280&#92;&quot;,&#92;&quot;Margin&#92;&quot;:&#92;&quot;+20,000&#92;&quot;,&#92;&quot;P1 Stark&#92;&quot;:60,&#92;&quot;P1 Armory&#92;&quot;:0,&#92;&quot;P3 Strong&#92;&quot;:60,&#92;&quot;P3 Dragon&#92;&quot;:0,&#92;&quot;P3 Greyjoy&#92;&quot;:60},{&#92;&quot;Ratio&#92;&quot;:&#92;&quot;50v50&#92;&quot;,&#92;&quot;Score A&#92;&quot;:&#92;&quot;63,120&#92;&quot;,&#92;&quot;Score B&#92;&quot;:&#92;&quot;15,440&#92;&quot;,&#92;&quot;Margin&#92;&quot;:&#92;&quot;+47,680&#92;&quot;,&#92;&quot;P1 Stark&#92;&quot;:37,&#92;&quot;P1 Armory&#92;&quot;:0,&#92;&quot;P3 Strong&#92;&quot;:37,&#92;&quot;P3 Dragon&#92;&quot;:0,&#92;&quot;P3 Greyjoy&#92;&quot;:37},{&#92;&quot;Ratio&#92;&quot;:&#92;&quot;60v40&#92;&quot;,&#92;&quot;Score A&#92;&quot;:&#92;&quot;66,640&#92;&quot;,&#92;&quot;Score B&#92;&quot;:&#92;&quot;12,320&#92;&quot;,&#92;&quot;Margin&#92;&quot;:&#92;&quot;+54,320&#92;&quot;,&#92;&quot;P1 Stark&#92;&quot;:45,&#92;&quot;P1 Armory&#92;&quot;:45,&#92;&quot;P3 Strong&#92;&quot;:45,&#92;&quot;P3 Dragon&#92;&quot;:45,&#92;&quot;P3 Greyjoy&#92;&quot;:45},{&#92;&quot;Ratio&#92;&quot;:&#92;&quot;70v30&#92;&quot;,&#92;&quot;Score A&#92;&quot;:&#92;&quot;66,640&#92;&quot;,&#92;&quot;Score B&#92;&quot;:&#92;&quot;12,320&#92;&quot;,&#92;&quot;Margin&#92;&quot;:&#92;&quot;+54,320&#92;&quot;,&#92;&quot;P1 Stark&#92;&quot;:52,&#92;&quot;P1 Armory&#92;&quot;:52,&#92;&quot;P3 Strong&#92;&quot;:52,&#92;&quot;P3 Dragon&#92;&quot;:52,&#92;&quot;P3 Greyjoy&#92;&quot;:52}]&quot;' data-total-rows='5' data-total-columns='9' data-max-columns='50' data-banner-text='&quot;&quot;' data-pagination='false' data-page-size='10' data-selection='&quot;multi&quot;' data-show-filters='false' data-show-download='false' data-show-column-summaries='false' data-show-data-types='true' data-show-page-size-selector='false' data-show-column-explorer='true' data-show-chart-builder='true' data-row-headers='[]' data-has-stable-row-id='false' data-lazy='false' data-preload='false' data-download-file-name='&quot;sweep_rows&quot;'></marimo-table></marimo-ui-element></div>"
+          }
+        }
+      ],
       "console": []
     },
     {
-      "id": "TqIu",
-      "code_hash": "731a469099a78a4629e1081c5ddbc571",
-      "outputs": [],
+      "id": "nWHF",
+      "code_hash": "a0c3e778b7fa64c10a6bef65556d7d5c",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"4-optimizer\">4 \u00b7 Optimizer</h2></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "Vxnm",
+      "code_hash": "f11bd7dd3c211363f66d42272a6a582d",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/html": "<div style='display: flex;flex: 1;flex-direction: column;justify-content: flex-start;align-items: normal;flex-wrap: nowrap;gap: 0.5rem'><span class=\"markdown prose dark:prose-invert contents\"><h3 id=\"our-optimal-score-vs-opponent-profile-80v60\">Our optimal score vs opponent profile (80v60)</h3></span><marimo-ui-element object-id='Vxnm-0' random-id='fc69dee4-9d66-d96c-7553-b091c56d16f4'><marimo-table data-initial-value='[]' data-label='&quot;&lt;span class=&#92;&quot;markdown prose dark:prose-invert contents&#92;&quot;&gt;&lt;span class=&#92;&quot;paragraph&#92;&quot;&gt;Sweep over opponent spread \u00d7 aggression&lt;/span&gt;&lt;/span&gt;&quot;' data-data='&quot;[{&#92;&quot;Spread&#92;&quot;:0.0,&#92;&quot;Aggression&#92;&quot;:0.0,&#92;&quot;Our Score&#92;&quot;:&#92;&quot;42,960&#92;&quot;,&#92;&quot;Their Score&#92;&quot;:&#92;&quot;2,320&#92;&quot;,&#92;&quot;Margin&#92;&quot;:&#92;&quot;+40,640&#92;&quot;},{&#92;&quot;Spread&#92;&quot;:0.0,&#92;&quot;Aggression&#92;&quot;:0.3,&#92;&quot;Our Score&#92;&quot;:&#92;&quot;42,960&#92;&quot;,&#92;&quot;Their Score&#92;&quot;:&#92;&quot;2,320&#92;&quot;,&#92;&quot;Margin&#92;&quot;:&#92;&quot;+40,640&#92;&quot;},{&#92;&quot;Spread&#92;&quot;:0.0,&#92;&quot;Aggression&#92;&quot;:0.5,&#92;&quot;Our Score&#92;&quot;:&#92;&quot;42,960&#92;&quot;,&#92;&quot;Their Score&#92;&quot;:&#92;&quot;2,320&#92;&quot;,&#92;&quot;Margin&#92;&quot;:&#92;&quot;+40,640&#92;&quot;},{&#92;&quot;Spread&#92;&quot;:0.0,&#92;&quot;Aggression&#92;&quot;:0.7,&#92;&quot;Our Score&#92;&quot;:&#92;&quot;42,960&#92;&quot;,&#92;&quot;Their Score&#92;&quot;:&#92;&quot;2,320&#92;&quot;,&#92;&quot;Margin&#92;&quot;:&#92;&quot;+40,640&#92;&quot;},{&#92;&quot;Spread&#92;&quot;:0.0,&#92;&quot;Aggression&#92;&quot;:1.0,&#92;&quot;Our Score&#92;&quot;:&#92;&quot;42,960&#92;&quot;,&#92;&quot;Their Score&#92;&quot;:&#92;&quot;2,320&#92;&quot;,&#92;&quot;Margin&#92;&quot;:&#92;&quot;+40,640&#92;&quot;},{&#92;&quot;Spread&#92;&quot;:0.3,&#92;&quot;Aggression&#92;&quot;:0.0,&#92;&quot;Our Score&#92;&quot;:&#92;&quot;64,960&#92;&quot;,&#92;&quot;Their Score&#92;&quot;:&#92;&quot;14,000&#92;&quot;,&#92;&quot;Margin&#92;&quot;:&#92;&quot;+50,960&#92;&quot;},{&#92;&quot;Spread&#92;&quot;:0.3,&#92;&quot;Aggression&#92;&quot;:0.3,&#92;&quot;Our Score&#92;&quot;:&#92;&quot;66,640&#92;&quot;,&#92;&quot;Their Score&#92;&quot;:&#92;&quot;12,320&#92;&quot;,&#92;&quot;Margin&#92;&quot;:&#92;&quot;+54,320&#92;&quot;},{&#92;&quot;Spread&#92;&quot;:0.3,&#92;&quot;Aggression&#92;&quot;:0.5,&#92;&quot;Our Score&#92;&quot;:&#92;&quot;66,640&#92;&quot;,&#92;&quot;Their Score&#92;&quot;:&#92;&quot;12,320&#92;&quot;,&#92;&quot;Margin&#92;&quot;:&#92;&quot;+54,320&#92;&quot;},{&#92;&quot;Spread&#92;&quot;:0.3,&#92;&quot;Aggression&#92;&quot;:0.7,&#92;&quot;Our Score&#92;&quot;:&#92;&quot;66,640&#92;&quot;,&#92;&quot;Their Score&#92;&quot;:&#92;&quot;12,320&#92;&quot;,&#92;&quot;Margin&#92;&quot;:&#92;&quot;+54,320&#92;&quot;},{&#92;&quot;Spread&#92;&quot;:0.3,&#92;&quot;Aggression&#92;&quot;:1.0,&#92;&quot;Our Score&#92;&quot;:&#92;&quot;66,640&#92;&quot;,&#92;&quot;Their Score&#92;&quot;:&#92;&quot;12,320&#92;&quot;,&#92;&quot;Margin&#92;&quot;:&#92;&quot;+54,320&#92;&quot;}]&quot;' data-total-rows='25' data-total-columns='5' data-max-columns='50' data-banner-text='&quot;&quot;' data-pagination='true' data-page-size='10' data-selection='&quot;multi&quot;' data-show-filters='false' data-show-download='false' data-show-column-summaries='true' data-show-data-types='true' data-show-page-size-selector='true' data-show-column-explorer='true' data-show-chart-builder='true' data-row-headers='[]' data-has-stable-row-id='false' data-lazy='false' data-preload='false' data-download-file-name='&quot;sensitivity_rows&quot;'></marimo-table></marimo-ui-element></div>"
+          }
+        }
+      ],
       "console": []
     },
     {
       "id": "DnEU",
-      "code_hash": "3255a994d1270b12b381960d626f0ea1",
-      "outputs": [],
-      "console": []
-    },
-    {
-      "id": "ulZA",
-      "code_hash": "0b5a4bce154f0da71df5a6e13c5beb7a",
-      "outputs": [],
-      "console": []
-    },
-    {
-      "id": "Pvdt",
-      "code_hash": "9a08dea26a822bbd840d109d9a252c6c",
-      "outputs": [],
-      "console": []
-    },
-    {
-      "id": "ZBYS",
-      "code_hash": "aeab51ac1e945ec3e124b665bde144bd",
-      "outputs": [],
+      "code_hash": "3fd4540d234761b2c6e86dc853e2aa44",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"7-strategic-insights\">7 \u00b7 Strategic Insights</h2>\n<span class=\"paragraph\"><strong>Key takeaways from the sweeps above:</strong></span>\n<ol>\n<li><strong>Dragon escort is high-value</strong> \u2014 6,000 pts (2\u00d73,000) from minute 12 onwards. Always contest if you have the numbers.</li>\n<li><strong>Strongholds dominate late-game</strong> \u2014 4\u00d7180 = 720 pts/min from minute 12. The first-capture bonus (4\u00d7600 = 2,400) is also the largest.</li>\n<li><strong>Outposts are early-game anchors</strong> \u2014 cheap to hold, steady 80 pts/min income from minute 0.</li>\n<li><strong>Armory + Hot Spring</strong> \u2014 moderate value (120 pts/min each) but also grant combat buffs (50% stats / 100% heal speed).</li>\n<li><strong>Player advantage compounds</strong> \u2014 even a small numbers advantage (e.g. 60v40) lets you contest more objectives simultaneously.</li>\n<li><strong>Against defensive opponents</strong> \u2014 push center and strongholds harder; they won't contest your outposts.</li>\n<li><strong>Against aggressive opponents</strong> \u2014 defend your outposts and let them overextend.</li>\n</ol></span>"
+          }
+        }
+      ],
       "console": []
     }
   ]

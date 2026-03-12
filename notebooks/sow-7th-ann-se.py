@@ -1,3 +1,11 @@
+# /// script
+# requires-python = ">=3.13"
+# dependencies = [
+#     "marimo",
+#     "numpy>=2.2.0",
+# ]
+# ///
+
 import marimo
 
 __generated_with = "0.20.4"
@@ -5,704 +13,675 @@ app = marimo.App(width="medium")
 
 
 @app.cell
-def _(mo):
-    mo.md(r"""
-    # Siege of Winterfell — Strategy Simulator
-
-    This notebook models the point-accumulation mechanics of the **Siege of Winterfell**
-    event in *Game of Thrones: Winter is Coming* (GTArcade).  It simulates a 60-minute
-    battle under configurable assumptions and grid-searches over deployment allocations
-    to find the strategy that maximises total alliance points.
-
-    ## Scoring channels
-
-    1. **First capture** — one-time points when your alliance first occupies a building.
-    2. **Holding** — points per minute for each building you control.
-    3. **Chest escort** — chests spawn at Winterfell starting at minute 12.  The first
-       yields 4 000 pts; each subsequent chest adds 1 000.  A new chest appears
-       5 min after successful delivery.  Escorting takes time and ties up deployments.
-
-    ## Map timeline
-
-    | Period | Minutes | Available |
-    |--------|---------|-----------|
-    | 1 | 0–12 | All buildings |
-    | 2 | 12–60 | All buildings; chests begin spawning |
-
-    ## Deployment model
-
-    Each player contributes 3 deployments.  Deployments are split across three roles:
-    **building capture/hold**, **chest escort**, and **reserve**.  The number of buildings
-    you can hold is bounded by `min(available_buildings, deployments / cost_per_building)`,
-    further attenuated by the **opponent strength** parameter.  Chest throughput is
-    constrained by the game rule that only one chest at a time comes from Winterfell
-    (next spawns after delivery + delay).
-
-    > **Point values below are placeholders.**  Replace them with the actual in-game
-    > values for calibrated results.
-    """)
-    return
-
-
-@app.cell
 def _():
+    from __future__ import annotations
+    from dataclasses import dataclass, field
+    from itertools import product
+
     import marimo as mo
     import numpy as np
 
-    return mo, np
+    return dataclass, field, mo, np, product
 
 
 @app.cell
-def _(mo):
-    mo.md("""
-    ## 1 · Building Parameters
-    """)
-    return
+def _(dataclass, field):
+    @dataclass(frozen=True)
+    class Objective:
+        name: str
+        count: int
+        first_capture: int
+        hold_pts_min: int
+        opens_at: int
+        zone: str
+
+    @dataclass(frozen=True)
+    class Dragon:
+        name: str
+        escort_pts: int
+        spawns_at: int
+
+    @dataclass(frozen=True)
+    class TreasureConfig:
+        starts_at: int = 8
+        normal_pts: int = 80
+        rare_pts: int = 120
+
+    @dataclass(frozen=True)
+    class GameConfig:
+        objectives: list[Objective]
+        dragons: list[Dragon]
+        treasure: TreasureConfig = field(default_factory=TreasureConfig)
+        match_duration: int = 60
+        phase_boundaries: list[int] = field(default_factory=lambda: [0, 8, 12])
+
+    @dataclass
+    class Allocation:
+        assignments: dict[str, dict[str, int]]
+        total_armies: int
+
+        def armies_used(self, phase: str) -> int:
+            return sum(self.assignments.get(phase, {}).values())
+
+        def armies_unused(self, phase: str) -> int:
+            return self.total_armies - self.armies_used(phase)
+
+        def is_valid(self, phase: str) -> bool:
+            return self.armies_used(phase) <= self.total_armies
+
+    return Allocation, Dragon, GameConfig, Objective
 
 
 @app.cell
-def _(mo):
-    mo.md("""
-    Each building type: **first-capture points**, **hold points/min**,
-    **count** on the map, **capture time**, and **deployment cost** (how many
-    deployments needed to capture and garrison one instance).
-    """)
-    return
-
-
-@app.cell
-def _(mo):
-    outpost_first = mo.ui.slider(
-        100, 2000, value=500, step=100, label="Outpost — first capture pts"
-    )
-    outpost_hold = mo.ui.slider(
-        10, 500, value=50, step=10, label="Outpost — hold pts/min"
-    )
-    outpost_count = mo.ui.slider(
-        1, 4, value=1, step=1, label="Outposts you can contest"
-    )
-    outpost_cap_time = mo.ui.slider(
-        0.5, 5.0, value=1.0, step=0.5, label="Outpost — capture time (min)"
-    )
-    outpost_dep_cost = mo.ui.slider(
-        1, 6, value=2, step=1, label="Outpost — deployments to hold one"
-    )
-    mo.vstack(
-        [outpost_first, outpost_hold, outpost_count, outpost_cap_time, outpost_dep_cost]
-    )
-    return (
-        outpost_cap_time,
-        outpost_count,
-        outpost_dep_cost,
-        outpost_first,
-        outpost_hold,
-    )
-
-
-@app.cell
-def _(mo):
-    stronghold_first = mo.ui.slider(
-        500, 10000, value=3000, step=500, label="Stronghold — first capture pts"
-    )
-    stronghold_hold = mo.ui.slider(
-        50, 1000, value=200, step=50, label="Stronghold — hold pts/min"
-    )
-    stronghold_count = mo.ui.slider(
-        1, 4, value=4, step=1, label="Strongholds (total contestable)"
-    )
-    stronghold_cap_time = mo.ui.slider(
-        0.5, 5.0, value=2.0, step=0.5, label="Stronghold — capture time (min)"
-    )
-    stronghold_dep_cost = mo.ui.slider(
-        1, 10, value=4, step=1, label="Stronghold — deployments to hold one"
-    )
-    mo.vstack(
-        [
-            stronghold_first,
-            stronghold_hold,
-            stronghold_count,
-            stronghold_cap_time,
-            stronghold_dep_cost,
+def _(Dragon, GameConfig, Objective):
+    def default_config() -> GameConfig:
+        objectives = [
+            Objective("Stark Outpost", 2, 200, 80, 0, "near_stark"),
+            Objective("Greyjoy Outpost", 2, 200, 80, 0, "near_greyjoy"),
+            Objective("Armory", 1, 400, 120, 0, "center"),
+            Objective("Hot Spring", 1, 400, 120, 0, "center"),
+            Objective("Stronghold", 4, 600, 180, 12, "mid"),
         ]
-    )
-    return (
-        stronghold_cap_time,
-        stronghold_count,
-        stronghold_dep_cost,
-        stronghold_first,
-        stronghold_hold,
-    )
-
-
-@app.cell
-def _(mo):
-    special_first = mo.ui.slider(
-        500, 5000, value=1500, step=500, label="Special bldg — first capture pts"
-    )
-    special_hold = mo.ui.slider(
-        20, 500, value=100, step=20, label="Special bldg — hold pts/min"
-    )
-    special_count = mo.ui.slider(
-        1, 4, value=2, step=1, label="Special bldgs (Hot Spring + Armory)"
-    )
-    special_cap_time = mo.ui.slider(
-        0.5, 5.0, value=1.5, step=0.5, label="Special bldg — capture time (min)"
-    )
-    special_dep_cost = mo.ui.slider(
-        1, 8, value=3, step=1, label="Special bldg — deployments to hold one"
-    )
-    mo.vstack(
-        [special_first, special_hold, special_count, special_cap_time, special_dep_cost]
-    )
-    return (
-        special_cap_time,
-        special_count,
-        special_dep_cost,
-        special_first,
-        special_hold,
-    )
-
-
-@app.cell
-def _(mo):
-    mo.md("""
-    ## 2 · Chest / Escort Parameters
-    """)
-    return
-
-
-@app.cell
-def _(mo):
-    chest_base_pts = mo.ui.slider(
-        1000, 8000, value=4000, step=500, label="First chest points"
-    )
-    chest_increment = mo.ui.slider(
-        500, 3000, value=1000, step=500, label="Point increment per chest"
-    )
-    chest_spawn_delay = mo.ui.slider(
-        1, 10, value=5, step=1, label="Respawn delay after delivery (min)"
-    )
-    escort_time = mo.ui.slider(
-        1, 10, value=3, step=1, label="Escort round-trip time (min)"
-    )
-    escort_dep_cost = mo.ui.slider(
-        1, 6, value=3, step=1, label="Deployments tied up per escort run"
-    )
-    mo.vstack(
-        [
-            chest_base_pts,
-            chest_increment,
-            chest_spawn_delay,
-            escort_time,
-            escort_dep_cost,
+        dragons = [
+            Dragon("Winter Ice", 3000, 12),
+            Dragon("Flaming Sun", 3000, 12),
         ]
-    )
-    return (
-        chest_base_pts,
-        chest_increment,
-        chest_spawn_delay,
-        escort_dep_cost,
-        escort_time,
-    )
+        return GameConfig(objectives=objectives, dragons=dragons)
+
+    return (default_config,)
 
 
 @app.cell
-def _(mo):
-    mo.md("""
-    ## 3 · Force & Opponent Parameters
-    """)
-    return
+def _(Allocation, GameConfig, dataclass, field):
+    @dataclass
+    class SimResult:
+        score_a: int
+        score_b: int
+        breakdown_a: dict[str, int] = field(default_factory=dict)
+        breakdown_b: dict[str, int] = field(default_factory=dict)
 
+    def _phase_for_minute(minute: int, boundaries: list[int]) -> str:
+        for i in range(len(boundaries) - 1, -1, -1):
+            if minute >= boundaries[i]:
+                return f"phase{i + 1}"
+        return "phase1"
 
-@app.cell
-def _(mo):
-    n_players = mo.ui.slider(5, 50, value=20, step=1, label="Alliance players in event")
-    opp_strength = mo.ui.slider(
-        0.0, 1.0, value=0.7, step=0.05, label="Hold-success rate (vs opponent)"
-    )
-    mo.vstack([n_players, opp_strength])
-    return n_players, opp_strength
+    def _armies_at(alloc: Allocation, phase: str, objective: str) -> int:
+        return alloc.assignments.get(phase, {}).get(objective, 0)
 
+    def simulate(cfg: GameConfig, alloc_a: Allocation, alloc_b: Allocation) -> SimResult:
+        fc_a = fc_b = 0
+        hold_a = hold_b = 0
+        dragon_a = dragon_b = 0
+        treasure_a = treasure_b = 0
+        captured_by: dict[str, str | None] = {}
+        dragon_minutes_a = 0
+        dragon_minutes_b = 0
 
-@app.cell
-def _(mo):
-    mo.md("""
-    ## 4 · Manual Strategy Allocation
+        for t in range(cfg.match_duration):
+            phase = _phase_for_minute(t, cfg.phase_boundaries)
 
-    Set the percentage of your total deployment budget for each role.
-    Reserve = 100% − buildings% − chests% (clamped to ≥ 0).
-    """)
-    return
+            for obj in cfg.objectives:
+                if t < obj.opens_at:
+                    continue
+                aa = _armies_at(alloc_a, phase, obj.name)
+                ab = _armies_at(alloc_b, phase, obj.name)
+                holder = None
+                if aa > ab:
+                    holder = "a"
+                elif ab > aa:
+                    holder = "b"
+                if holder is not None:
+                    cap_key = f"{obj.name}_{holder}"
+                    if cap_key not in captured_by:
+                        captured_by[cap_key] = holder
+                        bonus = obj.first_capture * obj.count
+                        if holder == "a":
+                            fc_a += bonus
+                        else:
+                            fc_b += bonus
+                    pts = obj.hold_pts_min * obj.count
+                    if holder == "a":
+                        hold_a += pts
+                    else:
+                        hold_b += pts
 
+            if cfg.dragons and t >= cfg.dragons[0].spawns_at:
+                da = _armies_at(alloc_a, phase, "dragon")
+                db = _armies_at(alloc_b, phase, "dragon")
+                if da > db:
+                    dragon_minutes_a += 1
+                elif db > da:
+                    dragon_minutes_b += 1
 
-@app.cell
-def _(mo):
-    pct_buildings = mo.ui.slider(
-        0, 100, value=60, step=5, label="% deployments → buildings"
-    )
-    pct_chests = mo.ui.slider(
-        0, 100, value=30, step=5, label="% deployments → chest escort"
-    )
-    mo.vstack([pct_buildings, pct_chests])
-    return pct_buildings, pct_chests
+            if t >= cfg.treasure.starts_at:
+                ta = _armies_at(alloc_a, phase, "treasure")
+                tb = _armies_at(alloc_b, phase, "treasure")
+                avg_pts = (cfg.treasure.normal_pts + cfg.treasure.rare_pts) // 2
+                treasure_a += ta * avg_pts // 10
+                treasure_b += tb * avg_pts // 10
 
+        total_dragon_pts = sum(d.escort_pts for d in cfg.dragons)
+        if cfg.dragons and (cfg.match_duration > cfg.dragons[0].spawns_at):
+            if dragon_minutes_a > dragon_minutes_b:
+                dragon_a = total_dragon_pts
+            elif dragon_minutes_b > dragon_minutes_a:
+                dragon_b = total_dragon_pts
 
-@app.cell
-def _(mo):
-    mo.md("""
-    ## 5 · Simulation Results
-    """)
-    return
-
-
-@app.cell
-def _(
-    chest_base_pts,
-    chest_increment,
-    chest_spawn_delay,
-    escort_dep_cost,
-    escort_time,
-    n_players,
-    np,
-    opp_strength,
-    outpost_cap_time,
-    outpost_count,
-    outpost_dep_cost,
-    outpost_first,
-    outpost_hold,
-    special_cap_time,
-    special_count,
-    special_dep_cost,
-    special_first,
-    special_hold,
-    stronghold_cap_time,
-    stronghold_count,
-    stronghold_dep_cost,
-    stronghold_first,
-    stronghold_hold,
-):
-    MATCH_DURATION = 60
-    PHASE2_START = 12
-
-    _BLDG_CATALOG = [
-        (
-            "Outpost",
-            outpost_count.value,
-            outpost_first.value,
-            outpost_hold.value,
-            0,
-            outpost_cap_time.value,
-            outpost_dep_cost.value,
-        ),
-        (
-            "Stronghold",
-            stronghold_count.value,
-            stronghold_first.value,
-            stronghold_hold.value,
-            PHASE2_START,
-            stronghold_cap_time.value,
-            stronghold_dep_cost.value,
-        ),
-        (
-            "Special",
-            special_count.value,
-            special_first.value,
-            special_hold.value,
-            PHASE2_START,
-            special_cap_time.value,
-            special_dep_cost.value,
-        ),
-    ]
-    _CHEST_BASE = chest_base_pts.value
-    _CHEST_INC = chest_increment.value
-    _CHEST_DELAY = chest_spawn_delay.value
-    _ESCORT_TIME = escort_time.value
-    _ESCORT_DEP = escort_dep_cost.value
-    _HOLD_RATE = opp_strength.value
-    _N_PLAYERS = n_players.value
-
-    def simulate(pct_bld: int, pct_ch: int) -> dict:
-        total_dep = _N_PLAYERS * 3
-        dep_bld = int(total_dep * pct_bld / 100)
-        dep_ch = int(total_dep * pct_ch / 100)
-        dep_res = total_dep - dep_bld - dep_ch
-
-        # ── Greedy building allocation (by hold-value per deployment) ──
-        sorted_bldgs = sorted(
-            _BLDG_CATALOG,
-            key=lambda b: b[3] / max(b[6], 1),
-            reverse=True,
+        score_a = fc_a + hold_a + dragon_a + treasure_a
+        score_b = fc_b + hold_b + dragon_b + treasure_b
+        return SimResult(
+            score_a=score_a,
+            score_b=score_b,
+            breakdown_a={"first_capture": fc_a, "hold": hold_a, "dragon": dragon_a, "treasure": treasure_a},
+            breakdown_b={"first_capture": fc_b, "hold": hold_b, "dragon": dragon_b, "treasure": treasure_b},
         )
-        remaining_dep = dep_bld
-        held = {}
-        for bname, bmax, bfirst, bhold, bavail, bcap, bcost in sorted_bldgs:
-            if remaining_dep <= 0 or bcost <= 0:
-                held[bname] = (0, bavail + bcap, bfirst, bhold)
-                continue
-            can_afford = remaining_dep // bcost
-            n_raw = min(can_afford, bmax)
-            n_held = max(0, int(np.floor(n_raw * _HOLD_RATE)))
-            remaining_dep -= n_held * bcost
-            held[bname] = (n_held, bavail + bcap, bfirst, bhold)
-
-        # ── Can we escort? ──
-        can_escort = dep_ch >= _ESCORT_DEP
-
-        # ── Minute-by-minute ──
-        cum = 0
-        fc_total = 0
-        h_total = 0
-        ch_total = 0
-        timeline = []
-        next_chest_avail = float(PHASE2_START)
-        chests_delivered = 0
-        escort_busy_until = -1  # minute when current escort finishes
-
-        for t in range(MATCH_DURATION):
-            mf = mh = mc = 0
-
-            for bname, (nh, cmn, bfirst, bhold) in held.items():
-                cap_t = int(np.ceil(cmn))
-                if t == cap_t and nh > 0:
-                    mf += bfirst * nh
-                if t >= cap_t:
-                    mh += bhold * nh
-
-            # Chest logic
-            if can_escort:
-                # Check delivery
-                if escort_busy_until >= 0 and t >= escort_busy_until:
-                    pts = _CHEST_BASE + chests_delivered * _CHEST_INC
-                    mc += pts
-                    chests_delivered += 1
-                    next_chest_avail = t + _CHEST_DELAY
-                    escort_busy_until = -1
-
-                # Launch new escort
-                if escort_busy_until < 0 and t >= next_chest_avail:
-                    escort_busy_until = t + _ESCORT_TIME
-
-            fc_total += mf
-            h_total += mh
-            ch_total += mc
-            cum += mf + mh + mc
-            timeline.append(
-                {
-                    "minute": t,
-                    "first_capture": mf,
-                    "hold": mh,
-                    "chest": mc,
-                    "total_this_min": mf + mh + mc,
-                    "cumulative": cum,
-                }
-            )
-
-        return {
-            "total": cum,
-            "first_capture": fc_total,
-            "hold": h_total,
-            "chest": ch_total,
-            "chests_delivered": chests_delivered,
-            "pct_bld": pct_bld,
-            "pct_ch": pct_ch,
-            "pct_res": 100 - pct_bld - pct_ch,
-            "dep_bld": dep_bld,
-            "dep_ch": dep_ch,
-            "dep_res": dep_res,
-            "dep_total": total_dep,
-            "buildings_held": {k: v[0] for k, v in held.items()},
-            "timeline": timeline,
-        }
 
     return (simulate,)
 
 
 @app.cell
-def _(pct_buildings, pct_chests, simulate):
-    _pb = min(pct_buildings.value, 100)
-    _pc = min(pct_chests.value, 100 - _pb)
-    manual_result = simulate(_pb, _pc)
-    return (manual_result,)
+def _(Allocation, GameConfig, Objective, np):
+    _OWN_ZONES = {"near_greyjoy"}
+    _ENEMY_ZONES = {"near_stark"}
+
+    def _available_objectives(cfg: GameConfig, phase: str) -> list[Objective]:
+        phase_idx = int(phase.replace("phase", "")) - 1
+        boundaries = cfg.phase_boundaries
+        phase_start = boundaries[phase_idx] if phase_idx < len(boundaries) else 0
+        return [o for o in cfg.objectives if o.opens_at <= phase_start]
+
+    def _weight_objective(obj: Objective, aggression: float) -> float:
+        base = obj.hold_pts_min * obj.count
+        if obj.zone in _OWN_ZONES:
+            zone_mult = 1.0 + (1.0 - aggression)
+        elif obj.zone in _ENEMY_ZONES:
+            if aggression < 1e-9:
+                return 0.0
+            zone_mult = aggression
+        else:
+            zone_mult = 1.0
+        return base * zone_mult
+
+    def generate_opponent(cfg: GameConfig, total_armies: int, spread: float, aggression: float) -> Allocation:
+        assignments: dict[str, dict[str, int]] = {}
+        for phase in ["phase1", "phase2", "phase3"]:
+            available = _available_objectives(cfg, phase)
+            if not available:
+                assignments[phase] = {}
+                continue
+            weights = np.array([_weight_objective(o, aggression) for o in available], dtype=float)
+            mask = weights > 0
+            avail_f = [o for o, m in zip(available, mask) if m]
+            weights = weights[mask]
+            if len(avail_f) == 0:
+                assignments[phase] = {}
+                continue
+            if spread < 1e-9:
+                idx = int(np.argmax(weights))
+                assignments[phase] = {avail_f[idx].name: total_armies}
+                continue
+            temperature = 0.1 + spread * 10.0
+            scaled = weights / (weights.max() + 1e-9) * (1.0 / temperature)
+            exp_w = np.exp(scaled - scaled.max())
+            probs = exp_w / exp_w.sum()
+            raw = probs * total_armies
+            counts = np.floor(raw).astype(int)
+            remainder = total_armies - counts.sum()
+            fracs = raw - counts
+            for _ in range(int(remainder)):
+                idx = int(np.argmax(fracs))
+                counts[idx] += 1
+                fracs[idx] = -1
+            phase_alloc = {}
+            for obj, count in zip(avail_f, counts):
+                if count > 0:
+                    phase_alloc[obj.name] = int(count)
+            if phase == "phase3" and cfg.dragons:
+                dragon_share = int(total_armies * 0.1 * (0.5 + aggression * 0.5))
+                used = sum(phase_alloc.values())
+                if used + dragon_share > total_armies:
+                    sc = (total_armies - dragon_share) / max(used, 1)
+                    phase_alloc = {k: max(1, int(v * sc)) for k, v in phase_alloc.items()}
+                phase_alloc["dragon"] = dragon_share
+            assignments[phase] = phase_alloc
+        return Allocation(assignments=assignments, total_armies=total_armies)
+
+    return (generate_opponent,)
 
 
 @app.cell
-def _(manual_result, mo):
-    _r = manual_result
-    _bh = _r["buildings_held"]
-    mo.md(
-        f"""
-        ### Manual Allocation Result
+def _(Allocation, GameConfig, dataclass, generate_opponent, product, simulate):
+    @dataclass
+    class OptResult:
+        allocation: Allocation
+        score_a: int
+        score_b: int
+        breakdown_a: dict[str, int]
+        breakdown_b: dict[str, int]
 
-        | Metric | Value |
-        |--------|------:|
-        | **Total points** | **{_r["total"]:,}** |
-        | First-capture pts | {_r["first_capture"]:,} |
-        | Holding pts | {_r["hold"]:,} |
-        | Chest-escort pts | {_r["chest"]:,} |
-        | Chests delivered | {_r["chests_delivered"]} |
-        | | |
-        | Deployments → bldg | {_r["dep_bld"]} / {_r["dep_total"]} |
-        | Deployments → chest | {_r["dep_ch"]} / {_r["dep_total"]} |
-        | Deployments → reserve | {_r["dep_res"]} / {_r["dep_total"]} |
-        | | |
-        | Outposts held | {_bh.get("Outpost", 0)} |
-        | Strongholds held | {_bh.get("Stronghold", 0)} |
-        | Special bldgs held | {_bh.get("Special", 0)} |
-        """
-    )
-    return
+    def _feasible_combos(steps: list[int], n: int) -> list[tuple[int, ...]]:
+        if n == 0:
+            return [()]
+        if n == 1:
+            return [(s,) for s in steps]
+        return [combo for combo in product(steps, repeat=n) if sum(combo) <= 100]
+
+    def _generate_allocations(cfg: GameConfig, total_armies: int, step_pct: int) -> list[Allocation]:
+        groups = {
+            "own_outposts": "Stark Outpost",
+            "center_armory": "Armory",
+            "center_hotspring": "Hot Spring",
+            "strongholds": "Stronghold",
+            "enemy_outposts": "Greyjoy Outpost",
+            "dragon": "dragon",
+        }
+        p1_keys = ["own_outposts", "center_armory", "center_hotspring", "enemy_outposts"]
+        p3_keys = list(groups.keys())
+        steps = list(range(0, 101, step_pct))
+        allocations = []
+        for p1_combo in _feasible_combos(steps, len(p1_keys)):
+            p1_alloc = {}
+            for key, pct in zip(p1_keys, p1_combo):
+                armies = int(total_armies * pct / 100)
+                if armies > 0:
+                    p1_alloc[groups[key]] = armies
+            for p3_combo in _feasible_combos(steps, len(p3_keys)):
+                p3_alloc = {}
+                for key, pct in zip(p3_keys, p3_combo):
+                    armies = int(total_armies * pct / 100)
+                    if armies > 0:
+                        p3_alloc[groups[key]] = armies
+                alloc = Allocation(
+                    assignments={"phase1": p1_alloc, "phase2": p1_alloc, "phase3": p3_alloc},
+                    total_armies=total_armies,
+                )
+                if alloc.is_valid("phase1") and alloc.is_valid("phase3"):
+                    allocations.append(alloc)
+        return allocations
+
+    def optimize(cfg, n_players_a, n_players_b, opponent_spread, opponent_aggression, step_pct=10):
+        total_a = n_players_a * 3
+        total_b = n_players_b * 3
+        opponent_alloc = generate_opponent(cfg, total_b, opponent_spread, opponent_aggression)
+        candidates = _generate_allocations(cfg, total_a, step_pct)
+        results = []
+        for alloc in candidates:
+            sim = simulate(cfg, alloc, opponent_alloc)
+            results.append(OptResult(
+                allocation=alloc, score_a=sim.score_a, score_b=sim.score_b,
+                breakdown_a=sim.breakdown_a, breakdown_b=sim.breakdown_b,
+            ))
+        results.sort(key=lambda r: -r.score_a)
+        return results
+
+    return (optimize,)
 
 
 @app.cell
-def _(manual_result, mo):
-    _r = manual_result
-    _t = max(_r["total"], 1)
-    mo.md(
-        f"""
-        ### Point Breakdown
+def _(mo):
+    mo.md(r"""
+    # Siege of Winterfell — 7th Anniversary Strategy Optimizer
 
-        | Source | Points | Share |
-        |--------|-------:|------:|
-        | First capture | {_r["first_capture"]:,} | {_r["first_capture"] / _t * 100:.1f}% |
-        | Holding | {_r["hold"]:,} | {_r["hold"] / _t * 100:.1f}% |
-        | Chest escort | {_r["chest"]:,} | {_r["chest"] / _t * 100:.1f}% |
-        | **Total** | **{_r["total"]:,}** | 100% |
-        """
-    )
-    return
+    This notebook models the **Siege of Winterfell (7th Anniversary Special Edition)** event.
+    It simulates a 60-minute battle and grid-searches over deployment allocations to find
+    the strategy that maximises total alliance points.
 
+    ## Scoring channels
 
-@app.cell
-def _(manual_result, mo):
-    _tl = manual_result["timeline"]
-    _rows = [e for e in _tl if e["minute"] % 5 == 0 or e["minute"] == 59]
-    _lines = []
-    for _e in _rows:
-        _lines.append(
-            f"| {_e['minute']:>3} | {_e['first_capture']:>8,} "
-            f"| {_e['hold']:>8,} | {_e['chest']:>8,} "
-            f"| {_e['total_this_min']:>8,} | {_e['cumulative']:>10,} |"
-        )
-    _hdr = (
-        "| Min | 1st Cap  |   Hold   |  Chest   |  Minute  | Cumulative |\n"
-        "|----:|:--------:|:--------:|:--------:|:--------:|:----------:|"
-    )
-    mo.md(f"### Timeline (every 5 min)\n\n{_hdr}\n" + "\n".join(_lines))
+    1. **First capture** — one-time points when your alliance first occupies a building.
+    2. **Occupation** — points per minute for each building you control.
+    3. **Treasure digging** — treasures spawn at random locations from minute 8. Normal = 80 pts, Rare = 120 pts.
+    4. **Dragon escort** — Twin dragons spawn at minute 12. Each worth 3,000 pts. Majority controls escort direction.
+
+    ## Map timeline
+
+    | Period | Minutes | Events |
+    |--------|---------|--------|
+    | 1 | 0–8 | Outposts, Armory, Hot Spring available |
+    | 2 | 8–12 | Treasure spawning begins |
+    | 3 | 12–60 | Strongholds unlock, Dragons spawn |
+    """)
     return
 
 
 @app.cell
 def _(mo):
     mo.md("""
-    ## 6 · Allocation Optimiser
-
-    Grid search over `(% buildings, % chests)` in 5 % steps.
+    ## 1 · Config
     """)
     return
 
 
 @app.cell
-def _(simulate):
-    _all = []
-    for _pb in range(0, 105, 5):
-        for _pc in range(0, 105 - _pb, 5):
-            _all.append(simulate(_pb, _pc))
-    _all.sort(key=lambda x: -x["total"])
-    opt_results = _all
-    opt_best = _all[0]
-    return opt_best, opt_results
+def _(default_config, mo):
+    cfg = default_config()
+    mo.ui.table(
+        [
+            {
+                "Building": o.name,
+                "Count": o.count,
+                "First Capture": o.first_capture,
+                "Hold pts/min": o.hold_pts_min,
+                "Opens at": f"{o.opens_at} min",
+                "Zone": o.zone,
+            }
+            for o in cfg.objectives
+        ],
+        label="Building parameters (from default config)",
+    )
+    return (cfg,)
 
 
 @app.cell
-def _(mo, opt_best, opt_results):
-    _top = opt_results[:10]
-    _lines = []
-    for _i, _r in enumerate(_top):
-        _tag = " ← best" if _i == 0 else ""
-        _lines.append(
-            f"| {_r['pct_bld']:>3}% | {_r['pct_ch']:>3}% | {_r['pct_res']:>3}% "
-            f"| {_r['dep_bld']:>4} | {_r['dep_ch']:>4} "
-            f"| {_r['total']:>10,} | {_r['chests_delivered']:>2} "
-            f"| {_r['first_capture']:>8,} | {_r['hold']:>8,} | {_r['chest']:>8,} |{_tag}"
-        )
-    _hdr = (
-        "| Bldg | Chest | Res | #DepB | #DepC |      Total | Ch | 1st Cap  |   Hold   |  Chest   |\n"
-        "|-----:|------:|----:|------:|------:|-----------:|---:|---------:|---------:|---------:|"
-    )
-    _b = opt_best
-    mo.md(
-        f"""
-        ### Top 10 Allocations
+def _(mo):
+    players_a = mo.ui.slider(10, 100, value=80, step=5, label="Side A players")
+    players_b = mo.ui.slider(10, 100, value=60, step=5, label="Side B players")
+    mo.vstack([players_a, players_b])
+    return players_a, players_b
 
-        {_hdr}
-        {"".join(chr(10) + l for l in _lines)}
 
-        **Recommendation**: **{_b["pct_bld"]}%** buildings, **{_b["pct_ch"]}%** chests,
-        **{_b["pct_res"]}%** reserve → **{_b["total"]:,}** projected points.
-        """
-    )
+@app.cell
+def _(mo):
+    mo.md("""
+    ## 2 · Opponent Profile
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    opp_spread = mo.ui.slider(0.0, 1.0, value=0.7, step=0.05, label="Opponent spread (0=concentrated, 1=even)")
+    opp_aggression = mo.ui.slider(0.0, 1.0, value=0.5, step=0.05, label="Opponent aggression (0=defensive, 1=aggressive)")
+    mo.vstack([opp_spread, opp_aggression])
+    return opp_aggression, opp_spread
+
+
+@app.cell
+def _(cfg, generate_opponent, mo, opp_aggression, opp_spread, players_b):
+    opp_alloc = generate_opponent(cfg, players_b.value * 3, opp_spread.value, opp_aggression.value)
+    opp_rows = []
+    for _phase in ["phase1", "phase2", "phase3"]:
+        _assigns = opp_alloc.assignments.get(_phase, {})
+        for _name, _armies in sorted(_assigns.items()):
+            opp_rows.append({"Phase": _phase, "Target": _name, "Armies": _armies})
+    mo.vstack([
+        mo.md("### Opponent allocation preview"),
+        mo.ui.table(opp_rows, label=f"Total opponent armies: {players_b.value * 3}"),
+    ])
+    return (opp_alloc,)
+
+
+@app.cell
+def _(mo):
+    mo.md("""
+    ## 3 · Manual Allocation
+    """)
     return
 
 
 @app.cell
 def _(mo):
     mo.md("""
-    ## 7 · Sensitivity: Hold-Success Sweep
-
-    The table below re-runs the optimiser for hold-success rates from 0.3 to 1.0,
-    showing how the optimal allocation shifts with opponent pressure.
+    Set the percentage of your total armies for each objective group per phase.
+    Phase 1–2 share the same allocation. Phase 3 has its own (strongholds + dragon unlock).
     """)
     return
+
+
+@app.cell
+def _(mo):
+    p1_stark = mo.ui.slider(0, 100, value=30, step=5, label="Phase 1-2: Stark Outpost %")
+    p1_armory = mo.ui.slider(0, 100, value=20, step=5, label="Phase 1-2: Armory %")
+    p1_hotspring = mo.ui.slider(0, 100, value=20, step=5, label="Phase 1-2: Hot Spring %")
+    p1_greyjoy = mo.ui.slider(0, 100, value=10, step=5, label="Phase 1-2: Greyjoy Outpost %")
+    mo.vstack([p1_stark, p1_armory, p1_hotspring, p1_greyjoy])
+    return p1_armory, p1_greyjoy, p1_hotspring, p1_stark
+
+
+@app.cell
+def _(mo):
+    p3_stark = mo.ui.slider(0, 100, value=10, step=5, label="Phase 3: Stark Outpost %")
+    p3_armory = mo.ui.slider(0, 100, value=10, step=5, label="Phase 3: Armory %")
+    p3_hotspring = mo.ui.slider(0, 100, value=10, step=5, label="Phase 3: Hot Spring %")
+    p3_stronghold = mo.ui.slider(0, 100, value=30, step=5, label="Phase 3: Stronghold %")
+    p3_greyjoy = mo.ui.slider(0, 100, value=10, step=5, label="Phase 3: Greyjoy Outpost %")
+    p3_dragon = mo.ui.slider(0, 100, value=20, step=5, label="Phase 3: Dragon %")
+    mo.vstack([p3_stark, p3_armory, p3_hotspring, p3_stronghold, p3_greyjoy, p3_dragon])
+    return (
+        p3_armory,
+        p3_dragon,
+        p3_greyjoy,
+        p3_hotspring,
+        p3_stark,
+        p3_stronghold,
+    )
 
 
 @app.cell
 def _(
-    chest_base_pts,
-    chest_increment,
-    chest_spawn_delay,
-    escort_dep_cost,
-    escort_time,
-    n_players,
-    np,
-    outpost_cap_time,
-    outpost_count,
-    outpost_dep_cost,
-    outpost_first,
-    outpost_hold,
-    special_cap_time,
-    special_count,
-    special_dep_cost,
-    special_first,
-    special_hold,
-    stronghold_cap_time,
-    stronghold_count,
-    stronghold_dep_cost,
-    stronghold_first,
-    stronghold_hold,
+    Allocation,
+    cfg,
+    mo,
+    opp_alloc,
+    p1_armory,
+    p1_greyjoy,
+    p1_hotspring,
+    p1_stark,
+    p3_armory,
+    p3_dragon,
+    p3_greyjoy,
+    p3_hotspring,
+    p3_stark,
+    p3_stronghold,
+    players_a,
+    simulate,
 ):
-    MATCH = 60
-    P2 = 12
-    _cat = [
-        (
-            "Outpost",
-            outpost_count.value,
-            outpost_first.value,
-            outpost_hold.value,
-            0,
-            outpost_cap_time.value,
-            outpost_dep_cost.value,
-        ),
-        (
-            "Stronghold",
-            stronghold_count.value,
-            stronghold_first.value,
-            stronghold_hold.value,
-            P2,
-            stronghold_cap_time.value,
-            stronghold_dep_cost.value,
-        ),
-        (
-            "Special",
-            special_count.value,
-            special_first.value,
-            special_hold.value,
-            P2,
-            special_cap_time.value,
-            special_dep_cost.value,
-        ),
-    ]
+    total_a = players_a.value * 3
 
-    def _sim_hr(pct_bld, pct_ch, hr):
-        td = n_players.value * 3
-        db = int(td * pct_bld / 100)
-        dc = int(td * pct_ch / 100)
-        sb = sorted(_cat, key=lambda b: b[3] / max(b[6], 1), reverse=True)
-        rem = db
-        held = {}
-        for bn, bm, bf, bh, ba, bc, bdc in sb:
-            if rem <= 0 or bdc <= 0:
-                held[bn] = (0, ba + bc, bf, bh)
-                continue
-            ca = rem // bdc
-            nr = min(ca, bm)
-            nh = max(0, int(np.floor(nr * hr)))
-            rem -= nh * bdc
-            held[bn] = (nh, ba + bc, bf, bh)
-        can_e = dc >= escort_dep_cost.value
-        cum = 0
-        nca = float(P2)
-        cd = 0
-        ebu = -1
-        for t in range(MATCH):
-            mf = mh = mc = 0
-            for bn, (nh, cmn, bf, bh) in held.items():
-                ct = int(np.ceil(cmn))
-                if t == ct and nh > 0:
-                    mf += bf * nh
-                if t >= ct:
-                    mh += bh * nh
-            if can_e:
-                if ebu >= 0 and t >= ebu:
-                    mc += chest_base_pts.value + cd * chest_increment.value
-                    cd += 1
-                    nca = t + chest_spawn_delay.value
-                    ebu = -1
-                if ebu < 0 and t >= nca:
-                    ebu = t + escort_time.value
-            cum += mf + mh + mc
-        return cum
+    def _pct_to_armies(pct, total):
+        return int(total * pct / 100)
 
-    sweep_rows = []
-    for _hr_pct in range(30, 105, 10):
-        _hr = _hr_pct / 100
-        _best_t = 0
-        _best_pb = 0
-        _best_pc = 0
-        for _pb in range(0, 105, 5):
-            for _pc in range(0, 105 - _pb, 5):
-                _t = _sim_hr(_pb, _pc, _hr)
-                if _t > _best_t:
-                    _best_t = _t
-                    _best_pb = _pb
-                    _best_pc = _pc
-        sweep_rows.append((_hr, _best_pb, _best_pc, 100 - _best_pb - _best_pc, _best_t))
-    return (sweep_rows,)
+    p1_assign = {}
+    for _name, _slider in [
+        ("Stark Outpost", p1_stark),
+        ("Armory", p1_armory),
+        ("Hot Spring", p1_hotspring),
+        ("Greyjoy Outpost", p1_greyjoy),
+    ]:
+        _v = _pct_to_armies(_slider.value, total_a)
+        if _v > 0:
+            p1_assign[_name] = _v
 
+    p3_assign = {}
+    for _name, _slider in [
+        ("Stark Outpost", p3_stark),
+        ("Armory", p3_armory),
+        ("Hot Spring", p3_hotspring),
+        ("Stronghold", p3_stronghold),
+        ("Greyjoy Outpost", p3_greyjoy),
+        ("dragon", p3_dragon),
+    ]:
+        _v = _pct_to_armies(_slider.value, total_a)
+        if _v > 0:
+            p3_assign[_name] = _v
 
-@app.cell
-def _(mo, sweep_rows):
-    _lines = []
-    for _hr, _pb, _pc, _pr, _tot in sweep_rows:
-        _lines.append(f"| {_hr:.1f} | {_pb:>3}% | {_pc:>3}% | {_pr:>3}% | {_tot:>10,} |")
-    _hdr = (
-        "| Hold rate | Bldg | Chest | Res |      Total |\n"
-        "|---------:|-----:|------:|----:|-----------:|"
+    manual_alloc = Allocation(
+        assignments={"phase1": p1_assign, "phase2": p1_assign, "phase3": p3_assign},
+        total_armies=total_a,
     )
-    mo.md(f"### Optimal allocation by hold-success rate\n\n{_hdr}\n" + "\n".join(_lines))
+    manual_sim = simulate(cfg, manual_alloc, opp_alloc)
+
+    p1_total_pct = p1_stark.value + p1_armory.value + p1_hotspring.value + p1_greyjoy.value
+    p3_total_pct = p3_stark.value + p3_armory.value + p3_hotspring.value + p3_stronghold.value + p3_greyjoy.value + p3_dragon.value
+
+    mo.md(f"""
+    ### Manual Allocation Result
+
+    | Metric | Side A | Side B |
+    |--------|-------:|-------:|
+    | **Total Score** | **{manual_sim.score_a:,}** | **{manual_sim.score_b:,}** |
+    | First capture | {manual_sim.breakdown_a["first_capture"]:,} | {manual_sim.breakdown_b["first_capture"]:,} |
+    | Hold | {manual_sim.breakdown_a["hold"]:,} | {manual_sim.breakdown_b["hold"]:,} |
+    | Dragon | {manual_sim.breakdown_a["dragon"]:,} | {manual_sim.breakdown_b["dragon"]:,} |
+    | Treasure | {manual_sim.breakdown_a["treasure"]:,} | {manual_sim.breakdown_b["treasure"]:,} |
+    | | | |
+    | Phase 1-2 used | {p1_total_pct}% | |
+    | Phase 3 used | {p3_total_pct}% | |
+    | **Margin** | **{manual_sim.score_a - manual_sim.score_b:+,}** | |
+    """)
     return
 
 
 @app.cell
 def _(mo):
     mo.md("""
-    ## 8 · Notes & Limitations
+    ## 4 · Optimizer
+    """)
+    return
 
-    1. The simulation is **deterministic**. A stochastic variant (Beta-distributed
-       hold-success per minute, Monte Carlo over uncertain point values) would
-       produce distributional outputs rather than point estimates.
 
-    2. **Only one chest at a time** can be in transit from Winterfell per the game
-       rules.  The model enforces this.
+@app.cell
+def _(mo):
+    step_pct = mo.ui.slider(10, 50, value=25, step=5, label="Grid step % (smaller = slower but more precise)")
+    step_pct
+    return (step_pct,)
 
-    3. The model does **not** account for combat buffs from Hot Spring / Armory,
-       troop strength decay, or healing mechanics.
 
-    4. **Temporal reallocation** (shifting from buildings-heavy in Period 1 to
-       chests-heavy in Period 2) is not modelled; the current version uses a
-       static allocation for the full 60 minutes.
+@app.cell
+def _(
+    cfg,
+    mo,
+    opp_aggression,
+    opp_spread,
+    optimize,
+    players_a,
+    players_b,
+    step_pct,
+):
+    opt_results = optimize(
+        cfg,
+        players_a.value,
+        players_b.value,
+        opp_spread.value,
+        opp_aggression.value,
+        step_pct=step_pct.value,
+    )
+    top10 = opt_results[:10]
 
-    5. Building point values are **placeholders**.  Update them from in-game
-       screenshots for calibrated recommendations.
+    opt_rows = []
+    for _rank, _r in enumerate(top10, 1):
+        _p1 = _r.allocation.assignments.get("phase1", {})
+        _p3 = _r.allocation.assignments.get("phase3", {})
+        opt_rows.append({
+            "#": _rank,
+            "Score A": f"{_r.score_a:,}",
+            "Score B": f"{_r.score_b:,}",
+            "Margin": f"{_r.score_a - _r.score_b:+,}",
+            "P1 Stark": _p1.get("Stark Outpost", 0),
+            "P1 Armory": _p1.get("Armory", 0),
+            "P1 HotSpr": _p1.get("Hot Spring", 0),
+            "P1 Greyjoy": _p1.get("Greyjoy Outpost", 0),
+            "P3 Stark": _p3.get("Stark Outpost", 0),
+            "P3 Armory": _p3.get("Armory", 0),
+            "P3 HotSpr": _p3.get("Hot Spring", 0),
+            "P3 Strong": _p3.get("Stronghold", 0),
+            "P3 Greyjoy": _p3.get("Greyjoy Outpost", 0),
+            "P3 Dragon": _p3.get("dragon", 0),
+        })
+
+    opt_best = top10[0]
+    mo.vstack([
+        mo.md(f"""
+        ### Top 10 Allocations ({players_a.value}v{players_b.value})
+
+        **Best score: {opt_best.score_a:,}** (margin: {opt_best.score_a - opt_best.score_b:+,})
+        """),
+        mo.ui.table(opt_rows, label="Armies per objective"),
+    ])
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md("""
+    ## 5 · Player Ratio Sweep
+    """)
+    return
+
+
+@app.cell
+def _(cfg, mo, opp_aggression, opp_spread, optimize):
+    sweep_rows = []
+    for _a in range(30, 80, 10):
+        _b = 100 - _a
+        _results = optimize(cfg, _a, _b, opp_spread.value, opp_aggression.value, step_pct=25)
+        _best = _results[0]
+        _p1 = _best.allocation.assignments.get("phase1", {})
+        _p3 = _best.allocation.assignments.get("phase3", {})
+        sweep_rows.append({
+            "Ratio": f"{_a}v{_b}",
+            "Score A": f"{_best.score_a:,}",
+            "Score B": f"{_best.score_b:,}",
+            "Margin": f"{_best.score_a - _best.score_b:+,}",
+            "P1 Stark": _p1.get("Stark Outpost", 0),
+            "P1 Armory": _p1.get("Armory", 0),
+            "P3 Strong": _p3.get("Stronghold", 0),
+            "P3 Dragon": _p3.get("dragon", 0),
+            "P3 Greyjoy": _p3.get("Greyjoy Outpost", 0),
+        })
+
+    mo.vstack([
+        mo.md("### Optimal allocation as player ratio varies"),
+        mo.ui.table(sweep_rows, label="Best allocation per ratio"),
+    ])
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md("""
+    ## 6 · Opponent Sensitivity
+    """)
+    return
+
+
+@app.cell
+def _(cfg, mo, optimize, players_a, players_b):
+    sensitivity_rows = []
+    for _spread in [0.0, 0.3, 0.5, 0.7, 1.0]:
+        for _agg in [0.0, 0.3, 0.5, 0.7, 1.0]:
+            _results = optimize(cfg, players_a.value, players_b.value, _spread, _agg, step_pct=25)
+            _best = _results[0]
+            sensitivity_rows.append({
+                "Spread": _spread,
+                "Aggression": _agg,
+                "Our Score": f"{_best.score_a:,}",
+                "Their Score": f"{_best.score_b:,}",
+                "Margin": f"{_best.score_a - _best.score_b:+,}",
+            })
+
+    mo.vstack([
+        mo.md(f"### Our optimal score vs opponent profile ({players_a.value}v{players_b.value})"),
+        mo.ui.table(sensitivity_rows, label="Sweep over opponent spread x aggression"),
+    ])
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md("""
+    ## 7 · Strategic Insights
+
+    **Key takeaways from the sweeps above:**
+
+    1. **Dragon escort is high-value** — 6,000 pts (2x3,000) from minute 12 onwards. Always contest if you have the numbers.
+    2. **Strongholds dominate late-game** — 4x180 = 720 pts/min from minute 12. The first-capture bonus (4x600 = 2,400) is also the largest.
+    3. **Outposts are early-game anchors** — cheap to hold, steady 80 pts/min income from minute 0.
+    4. **Armory + Hot Spring** — moderate value (120 pts/min each) but also grant combat buffs (50% stats / 100% heal speed).
+    5. **Player advantage compounds** — even a small numbers advantage (e.g. 60v40) lets you contest more objectives simultaneously.
+    6. **Against defensive opponents** — push center and strongholds harder; they won't contest your outposts.
+    7. **Against aggressive opponents** — defend your outposts and let them overextend.
     """)
     return
 

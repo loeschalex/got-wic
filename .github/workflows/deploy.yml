@@ -24,6 +24,21 @@ jobs:
             uv run marimo export html-wasm "$notebook" -o _site/$(basename "${notebook%.py}") --mode edit
           done
 
+      - name: Generate index page
+        run: |
+          cat > _site/index.html << 'INDEXEOF'
+          <!DOCTYPE html>
+          <html lang="en">
+          <head><meta charset="utf-8"><title>GoT WiC Notebooks</title>
+          <style>body{font-family:system-ui;max-width:600px;margin:4rem auto;padding:0 1rem}
+          a{display:block;padding:.75rem 0;font-size:1.1rem}</style></head>
+          <body>
+          <h1>GoT: Winter is Coming — Notebooks</h1>
+          <a href="sow-7th-ann-se/">Siege of Winterfell — Strategy Optimizer</a>
+          <a href="hello/">Hello marimo (demo)</a>
+          </body></html>
+          INDEXEOF
+
       - name: Add .nojekyll
         run: touch _site/.nojekyll
 
