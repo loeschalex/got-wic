@@ -72,3 +72,47 @@ def test_default_config_total_objectives_count():
     cfg = default_config()
     total = sum(o.count for o in cfg.objectives)
     assert total == 10
+
+
+# --- PlayerTier / AllianceProfile tests ---
+
+from got_wic.model import PlayerTier, AllianceProfile, default_alliance_profile
+
+
+def test_player_tier_creation():
+    tier = PlayerTier(name="whale", combat_power=100.0, healing_capacity=-1)
+    assert tier.name == "whale"
+    assert tier.combat_power == 100.0
+    assert tier.healing_capacity == -1  # unlimited
+
+
+def test_alliance_profile_total_players():
+    profile = AllianceProfile(
+        tiers=[
+            PlayerTier("whale", 100.0, -1),
+            PlayerTier("dolphin", 30.0, 8),
+            PlayerTier("minnow", 8.0, 4),
+            PlayerTier("alt", 1.0, 2),
+        ],
+        counts=[2, 15, 25, 38],
+    )
+    assert profile.total_players == 80
+    assert profile.total_power == 2 * 100 + 15 * 30 + 25 * 8 + 38 * 1
+
+
+def test_alliance_profile_validation_mismatched_lengths():
+    """tiers and counts must have same length."""
+    import pytest
+    with pytest.raises(ValueError):
+        AllianceProfile(
+            tiers=[PlayerTier("whale", 100.0, -1)],
+            counts=[2, 15],
+        )
+
+
+def test_default_alliance_profile():
+    profile = default_alliance_profile(total_players=80)
+    assert profile.total_players == 80
+    assert len(profile.tiers) == 4
+    assert profile.tiers[0].name == "whale"
+    assert profile.tiers[3].name == "alt"

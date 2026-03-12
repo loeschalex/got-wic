@@ -51,6 +51,51 @@ class Allocation:
         return self.armies_used(phase) <= self.total_armies
 
 
+@dataclass(frozen=True)
+class PlayerTier:
+    name: str
+    combat_power: float
+    healing_capacity: int  # -1 = unlimited
+
+
+@dataclass(frozen=True)
+class AllianceProfile:
+    tiers: list[PlayerTier]
+    counts: list[int]
+
+    def __post_init__(self):
+        if len(self.tiers) != len(self.counts):
+            raise ValueError(
+                f"tiers ({len(self.tiers)}) and counts ({len(self.counts)}) must have same length"
+            )
+
+    @property
+    def total_players(self) -> int:
+        return sum(self.counts)
+
+    @property
+    def total_power(self) -> float:
+        return sum(t.combat_power * c for t, c in zip(self.tiers, self.counts))
+
+
+def default_alliance_profile(total_players: int) -> AllianceProfile:
+    """Create a default 4-tier alliance profile for a given player count.
+
+    Distributes players roughly: 3% whale, 17% dolphin, 30% minnow, 50% alt.
+    """
+    n_whale = max(1, round(total_players * 0.03))
+    n_dolphin = round(total_players * 0.17)
+    n_minnow = round(total_players * 0.30)
+    n_alt = total_players - n_whale - n_dolphin - n_minnow
+    tiers = [
+        PlayerTier("whale", 100.0, -1),
+        PlayerTier("dolphin", 30.0, 8),
+        PlayerTier("minnow", 8.0, 4),
+        PlayerTier("alt", 1.0, 2),
+    ]
+    return AllianceProfile(tiers=tiers, counts=[n_whale, n_dolphin, n_minnow, n_alt])
+
+
 def default_config() -> GameConfig:
     objectives = [
         Objective("Stark Outpost", 2, 200, 80, 0, "near_stark"),
