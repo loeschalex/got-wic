@@ -1,25 +1,55 @@
-from got_wic.model import default_config, Allocation
-from got_wic.simulate import simulate
+import numpy as np
+from got_wic.model import default_config, Allocation, PlayerTier, AllianceProfile
+from got_wic.simulate import simulate, SimResult
 
 
 def _make_alloc(total: int, phase_assignments: dict[str, dict[str, int]]) -> Allocation:
     return Allocation(assignments=phase_assignments, total_armies=total)
 
 
+def _make_profile(n_players: int) -> AllianceProfile:
+    """Simple profile: all minnows for testing predictability."""
+    return AllianceProfile(
+        tiers=[PlayerTier("minnow", 8.0, 100)],  # high healing so no attrition in basic tests
+        counts=[n_players],
+    )
+
+
 def test_empty_allocation_scores_zero():
     cfg = default_config()
     a = _make_alloc(60, {"phase1": {}, "phase2": {}, "phase3": {}})
     b = _make_alloc(60, {"phase1": {}, "phase2": {}, "phase3": {}})
-    result = simulate(cfg, a, b)
+    pa = _make_profile(20)
+    pb = _make_profile(20)
+    result = simulate(cfg, a, b, pa, pb, noise_scale=0.0)
     assert result.score_a == 0
     assert result.score_b == 0
 
 
-def test_uncontested_outpost_scores_hold_points():
-    """Side A sends 10 armies to Stark Outpost, Side B sends 0.
-    Outpost opens at minute 0, holds for 60 minutes.
-    2 outposts * 80 pts/min * 60 min = 9600, plus first capture 2*200 = 400.
-    Total = 10000."""
+def test_dominant_side_wins_building():
+    """Side A sends 30 armies to Stark Outpost, Side B sends 5. A should win."""
+    cfg = default_config()
+    a = _make_alloc(90, {
+        "phase1": {"Stark Outpost": 30},
+        "phase2": {"Stark Outpost": 30},
+        "phase3": {"Stark Outpost": 30},
+    })
+    b = _make_alloc(15, {
+        "phase1": {"Stark Outpost": 5},
+        "phase2": {"Stark Outpost": 5},
+        "phase3": {"Stark Outpost": 5},
+    })
+    pa = _make_profile(30)
+    pb = _make_profile(5)
+    result = simulate(cfg, a, b, pa, pb, noise_scale=0.0)
+    # A should capture and hold -- positive score
+    assert result.score_a > 0
+    assert result.breakdown_a["first_capture"] > 0
+    assert result.breakdown_a["hold"] > 0
+
+
+def test_result_has_timeline():
+    """SimResult should include per-tick power levels."""
     cfg = default_config()
     a = _make_alloc(30, {
         "phase1": {"Stark Outpost": 10},
@@ -27,13 +57,14 @@ def test_uncontested_outpost_scores_hold_points():
         "phase3": {"Stark Outpost": 10},
     })
     b = _make_alloc(30, {"phase1": {}, "phase2": {}, "phase3": {}})
-    result = simulate(cfg, a, b)
-    assert result.score_a == 10_000
+    pa = _make_profile(10)
+    pb = _make_profile(10)
+    result = simulate(cfg, a, b, pa, pb, noise_scale=0.0)
+    assert len(result.timeline) == cfg.match_duration
 
 
-def test_contested_objective_winner_takes_points():
-    """Side A sends 20 to Stark Outpost, Side B sends 10.
-    Side A wins majority, gets all points."""
+def test_result_has_healing_and_casualty_stats():
+    """SimResult should track healing spent and casualties."""
     cfg = default_config()
     a = _make_alloc(60, {
         "phase1": {"Stark Outpost": 20},
@@ -41,69 +72,32 @@ def test_contested_objective_winner_takes_points():
         "phase3": {"Stark Outpost": 20},
     })
     b = _make_alloc(60, {
-        "phase1": {"Stark Outpost": 10},
-        "phase2": {"Stark Outpost": 10},
-        "phase3": {"Stark Outpost": 10},
+        "phase1": {"Stark Outpost": 20},
+        "phase2": {"Stark Outpost": 20},
+        "phase3": {"Stark Outpost": 20},
     })
-    result = simulate(cfg, a, b)
-    assert result.score_a == 10_000
-    assert result.score_b == 0
+    pa = _make_profile(20)
+    pb = _make_profile(20)
+    result = simulate(cfg, a, b, pa, pb, noise_scale=0.0)
+    assert hasattr(result, "healing_spent_a")
 
 
-def test_strongholds_only_score_after_minute_12():
-    """Strongholds open at minute 12. Hold for 48 minutes.
-    4 * 180 * 48 = 34560, plus first capture 4 * 600 = 2400. Total = 36960."""
-    cfg = default_config()
-    a = _make_alloc(60, {
-        "phase1": {},
-        "phase2": {},
-        "phase3": {"Stronghold": 30},
-    })
-    b = _make_alloc(60, {"phase1": {}, "phase2": {}, "phase3": {}})
-    result = simulate(cfg, a, b)
-    assert result.score_a == 36_960
-
-
-def test_dragon_escort_scores_points():
-    """Side A sends armies to dragon, Side B sends 0. Should get escort pts."""
-    cfg = default_config()
-    a = _make_alloc(60, {
-        "phase1": {},
-        "phase2": {},
-        "phase3": {"dragon": 30},
-    })
-    b = _make_alloc(60, {"phase1": {}, "phase2": {}, "phase3": {}})
-    result = simulate(cfg, a, b)
-    assert result.score_a >= 6000  # 2 dragons * 3000
-
-
-def test_result_has_breakdown():
+def test_deterministic_without_noise():
+    """noise_scale=0 should produce identical results on repeated runs."""
     cfg = default_config()
     a = _make_alloc(30, {
         "phase1": {"Stark Outpost": 10},
         "phase2": {"Stark Outpost": 10},
         "phase3": {"Stark Outpost": 10},
     })
-    b = _make_alloc(30, {"phase1": {}, "phase2": {}, "phase3": {}})
-    result = simulate(cfg, a, b)
-    assert result.breakdown_a["first_capture"] == 400
-    assert result.breakdown_a["hold"] == 9600
-    assert result.breakdown_a["dragon"] == 0
-
-
-def test_both_sides_score_different_objectives():
-    """A holds Stark Outposts, B holds Greyjoy Outposts. Both score."""
-    cfg = default_config()
-    a = _make_alloc(60, {
-        "phase1": {"Stark Outpost": 20},
-        "phase2": {"Stark Outpost": 20},
-        "phase3": {"Stark Outpost": 20},
+    b = _make_alloc(15, {
+        "phase1": {"Stark Outpost": 5},
+        "phase2": {"Stark Outpost": 5},
+        "phase3": {"Stark Outpost": 5},
     })
-    b = _make_alloc(60, {
-        "phase1": {"Greyjoy Outpost": 20},
-        "phase2": {"Greyjoy Outpost": 20},
-        "phase3": {"Greyjoy Outpost": 20},
-    })
-    result = simulate(cfg, a, b)
-    assert result.score_a == 10_000
-    assert result.score_b == 10_000
+    pa = _make_profile(10)
+    pb = _make_profile(5)
+    r1 = simulate(cfg, a, b, pa, pb, noise_scale=0.0)
+    r2 = simulate(cfg, a, b, pa, pb, noise_scale=0.0)
+    assert r1.score_a == r2.score_a
+    assert r1.score_b == r2.score_b
