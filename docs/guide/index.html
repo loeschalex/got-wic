@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Siege of Winterfell — 7th Anniversary Strategy Guide</title>
+<style>
+  :root { --max-w: 720px; --accent: #3b82f6; --muted: #64748b; }
+  * { box-sizing: border-box; margin: 0; }
+  body { font-family: system-ui, -apple-system, sans-serif; color: #1e293b; line-height: 1.6;
+         max-width: var(--max-w); margin: 0 auto; padding: 2rem 1rem 4rem; }
+  h1 { font-size: 1.8rem; margin-bottom: .25rem; }
+  h2 { font-size: 1.3rem; margin-top: 2.5rem; border-bottom: 2px solid #e2e8f0; padding-bottom: .3rem; }
+  h3 { font-size: 1.05rem; margin-top: 1.5rem; }
+  p, li { margin-top: .5rem; }
+  ul, ol { padding-left: 1.4rem; }
+  img { width: 100%; border: 1px solid #e2e8f0; border-radius: 6px; margin: 1rem 0; }
+  .subtitle { color: var(--muted); font-size: .95rem; margin-bottom: 2rem; }
+  .cta { display: inline-block; margin-top: 1.5rem; padding: .6rem 1.2rem;
+         background: var(--accent); color: #fff; text-decoration: none;
+         border-radius: 6px; font-weight: 600; }
+  .cta:hover { opacity: .9; }
+  table { border-collapse: collapse; width: 100%; margin: 1rem 0; font-size: .9rem; }
+  th, td { border: 1px solid #e2e8f0; padding: .4rem .6rem; text-align: left; }
+  th { background: #f8fafc; }
+  code { background: #f1f5f9; padding: .1rem .3rem; border-radius: 3px; font-size: .9em; }
+  .tip { background: #eff6ff; border-left: 3px solid var(--accent); padding: .6rem 1rem; margin: 1rem 0; border-radius: 0 6px 6px 0; }
+</style>
+</head>
+<body>
+
+<h1>Siege of Winterfell — 7th Anniversary</h1>
+<p class="subtitle">Strategy Optimizer &mdash; User Guide</p>
+
+<p>This interactive notebook helps your alliance plan army deployments for the
+<strong>Siege of Winterfell (7th Anniversary Special Edition)</strong> event.
+It simulates a full 60-minute battle and finds the allocation that maximises
+your total score against a configurable opponent.</p>
+
+<a class="cta" href="sow-7th-ann-se/">Open the Optimizer</a>
+
+<h2>How the event works</h2>
+
+<p>The battle lasts 60 minutes across three phases. Your alliance earns points from four channels:</p>
+
+<table>
+  <tr><th>Channel</th><th>How it works</th></tr>
+  <tr><td><strong>First capture</strong></td><td>One-time bonus when you first occupy a building</td></tr>
+  <tr><td><strong>Occupation</strong></td><td>Points every minute for each building you hold</td></tr>
+  <tr><td><strong>Treasure</strong></td><td>Dig treasures at random spots from minute 8 (80&ndash;120 pts each)</td></tr>
+  <tr><td><strong>Dragon escort</strong></td><td>Two dragons spawn at minute 12, worth 3,000 pts each. Majority wins the escort.</td></tr>
+</table>
+
+<table>
+  <tr><th>Phase</th><th>Minutes</th><th>What opens</th></tr>
+  <tr><td>1</td><td>0&ndash;8</td><td>Outposts, Armory, Hot Spring</td></tr>
+  <tr><td>2</td><td>8&ndash;12</td><td>Treasure spawning begins</td></tr>
+  <tr><td>3</td><td>12&ndash;60</td><td>Strongholds unlock, Dragons spawn</td></tr>
+</table>
+
+<h2>Section 1 &mdash; Config</h2>
+
+<img src="img/sow-header.png" alt="Config section showing building table and player sliders">
+
+<p>This section is read-only reference. It shows every building on the map with its point values.
+Below the table, two sliders set the match size:</p>
+
+<ul>
+  <li><strong>Side A players</strong> &mdash; your alliance size (each player contributes 3 army units)</li>
+  <li><strong>Side B players</strong> &mdash; the opposing alliance size</li>
+</ul>
+
+<div class="tip">
+  Example: 80 players on Side A = 240 total armies to distribute.
+  A smaller Side B (e.g. 60) gives you more armies per objective, making wins easier.
+</div>
+
+<h2>Section 2 &mdash; Opponent Profile</h2>
+
+<img src="img/sow-opponent.png" alt="Opponent profile sliders and allocation preview table">
+
+<p>These two sliders control how the simulated opponent behaves:</p>
+
+<ul>
+  <li><strong>Spread</strong> (0&ndash;1) &mdash; How evenly the opponent distributes armies.
+    <code>0</code> = all-in on one target, <code>1</code> = spread evenly across everything.</li>
+  <li><strong>Aggression</strong> (0&ndash;1) &mdash; How much the opponent pushes into <em>your</em> territory.
+    <code>0</code> = purely defensive (ignores your outposts), <code>1</code> = maximum pressure on your side.</li>
+</ul>
+
+<p>The <strong>Opponent allocation preview</strong> table below the sliders updates live,
+showing exactly how many armies the opponent sends to each building in each phase.
+Use this to verify the profile matches the opponent you expect to face.</p>
+
+<div class="tip">
+  Start with <strong>spread 0.7, aggression 0.5</strong> for a balanced opponent.
+  If you're facing a zerg-rush alliance, try aggression 0.8+.
+  Against turtles, drop it to 0.2.
+</div>
+
+<h2>Section 3 &mdash; Manual Allocation</h2>
+
+<img src="img/sow-manual.png" alt="Manual allocation sliders for Phase 1-2 and Phase 3">
+
+<p>This is where you design your own strategy. Each slider sets the <strong>percentage</strong>
+of your total armies sent to that objective.</p>
+
+<h3>Phase 1&ndash;2 sliders (minutes 0&ndash;12)</h3>
+<ul>
+  <li><strong>Stark Outpost %</strong> &mdash; your home outposts (easy to hold, steady income)</li>
+  <li><strong>Armory %</strong> &mdash; centre building (120 pts/min + 50% stat buff)</li>
+  <li><strong>Hot Spring %</strong> &mdash; centre building (120 pts/min + 100% heal speed)</li>
+  <li><strong>Greyjoy Outpost %</strong> &mdash; enemy outposts (risky but denies them points)</li>
+</ul>
+
+<h3>Phase 3 sliders (minutes 12&ndash;60)</h3>
+<p>Same buildings plus two new targets that unlock at minute 12:</p>
+<ul>
+  <li><strong>Stronghold %</strong> &mdash; 4 strongholds worth 180 pts/min each; the biggest point source in the late game</li>
+  <li><strong>Dragon %</strong> &mdash; armies contesting the dragon escort (6,000 pts total if you win majority)</li>
+</ul>
+
+<p>The result table below shows your <strong>Total Score</strong> vs the opponent, broken down by
+first capture, hold, dragon, and treasure. The <strong>Margin</strong> row tells you
+how far ahead (or behind) you are.</p>
+
+<div class="tip">
+  Percentages don't have to sum to 100 &mdash; unused armies simply stay in reserve.
+  But going over 100% is not allowed.
+</div>
+
+<h2>Section 4 &mdash; Optimizer</h2>
+
+<img src="img/sow-optimizer.png" alt="Optimizer results table showing top 10 allocations">
+
+<p>Instead of manually tweaking sliders, the optimizer <strong>tries every combination</strong>
+and ranks them by score. It uses the player counts and opponent profile you set above.</p>
+
+<ul>
+  <li><strong>Grid step %</strong> &mdash; controls granularity. <code>25%</code> is fast (~seconds);
+    <code>10%</code> is thorough but slower. Start coarse, then refine.</li>
+</ul>
+
+<p>The <strong>Top 10 Allocations</strong> table shows the best strategies found.
+Each row lists the exact army count per objective per phase.
+Use the #1 result as your starting plan, then fine-tune in Section 3.</p>
+
+<h2>Sections 5&ndash;6 &mdash; Sweeps</h2>
+
+<p>These run the optimizer across multiple scenarios automatically:</p>
+
+<ul>
+  <li><strong>Player Ratio Sweep</strong> &mdash; shows the best strategy for different alliance sizes
+    (30v70, 40v60, etc.), so you can plan for various matchups.</li>
+  <li><strong>Opponent Sensitivity</strong> &mdash; sweeps all spread/aggression combos to show how
+    robust your strategy is. If your margin stays positive across the whole grid,
+    your plan is solid regardless of what the opponent does.</li>
+</ul>
+
+<h2>Section 7 &mdash; Strategic Insights</h2>
+
+<p>A summary of key takeaways derived from the model:</p>
+<ol>
+  <li><strong>Dragon escort is high-value</strong> &mdash; 6,000 pts from minute 12. Always contest if you have the numbers.</li>
+  <li><strong>Strongholds dominate late-game</strong> &mdash; 720 pts/min combined, plus the largest first-capture bonus (2,400).</li>
+  <li><strong>Outposts are early-game anchors</strong> &mdash; cheap to hold, steady 80 pts/min from the start.</li>
+  <li><strong>Centre buildings give buffs</strong> &mdash; Armory (50% stats) and Hot Spring (100% heal) matter beyond raw points.</li>
+  <li><strong>Numbers compound</strong> &mdash; even a small player advantage lets you contest more objectives at once.</li>
+</ol>
+
+<h2>Quick workflow</h2>
+
+<ol>
+  <li>Set your alliance sizes in <strong>Section 1</strong></li>
+  <li>Profile the opponent in <strong>Section 2</strong></li>
+  <li>Run the <strong>Optimizer</strong> (Section 4) at 25% step</li>
+  <li>Copy the top result into <strong>Manual Allocation</strong> (Section 3) and tweak</li>
+  <li>Check the <strong>Sweeps</strong> (Sections 5&ndash;6) to stress-test your plan</li>
+</ol>
+
+<a class="cta" href="sow-7th-ann-se/">Open the Optimizer</a>
+
+</body>
+</html>
