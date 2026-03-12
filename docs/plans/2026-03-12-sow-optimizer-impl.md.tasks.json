@@ -1,14 +1,14 @@
 {
   "planPath": "docs/plans/2026-03-12-sow-optimizer-impl.md",
   "tasks": [
-    {"id": 0, "subject": "Task 0: Add pytest to dev dependencies", "status": "pending"},
-    {"id": 1, "subject": "Task 1: Game model dataclasses (model.py)", "status": "pending", "blockedBy": [0]},
-    {"id": 2, "subject": "Task 2: Simulation engine (simulate.py)", "status": "pending", "blockedBy": [1]},
+    {"id": 0, "subject": "Task 0: Add pytest to dev dependencies", "status": "completed", "lastUpdated": "2026-03-12T14:30:00Z"},
+    {"id": 1, "subject": "Task 1: Game model dataclasses (model.py)", "status": "completed", "blockedBy": [0], "lastUpdated": "2026-03-12T14:32:00Z"},
+    {"id": 2, "subject": "Task 2: Simulation engine (simulate.py)", "status": "completed", "blockedBy": [1], "lastUpdated": "2026-03-12T14:35:00Z"},
     {"id": 3, "subject": "Task 3: Opponent strategy generator (opponent.py)", "status": "pending", "blockedBy": [1]},
     {"id": 4, "subject": "Task 4: Grid search optimizer (optimize.py)", "status": "pending", "blockedBy": [2, 3]},
     {"id": 5, "subject": "Task 5: Package exports", "status": "pending", "blockedBy": [4]},
     {"id": 6, "subject": "Task 6: Marimo notebook", "status": "pending", "blockedBy": [5]},
     {"id": 7, "subject": "Task 7: Integration test", "status": "pending", "blockedBy": [5]}
   ],
-  "lastUpdated": "2026-03-12T14:00:00Z"
+  "lastUpdated": "2026-03-12T14:35:00Z"
 }

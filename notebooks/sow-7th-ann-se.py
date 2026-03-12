@@ -1,48 +1,46 @@
 import marimo
 
-__generated_with = "0.10.0"
+__generated_with = "0.20.4"
 app = marimo.App(width="medium")
 
 
 @app.cell
 def _(mo):
-    mo.md(
-        r"""
-        # Siege of Winterfell — Strategy Simulator
+    mo.md(r"""
+    # Siege of Winterfell — Strategy Simulator
 
-        This notebook models the point-accumulation mechanics of the **Siege of Winterfell**
-        event in *Game of Thrones: Winter is Coming* (GTArcade).  It simulates a 60-minute
-        battle under configurable assumptions and grid-searches over deployment allocations
-        to find the strategy that maximises total alliance points.
+    This notebook models the point-accumulation mechanics of the **Siege of Winterfell**
+    event in *Game of Thrones: Winter is Coming* (GTArcade).  It simulates a 60-minute
+    battle under configurable assumptions and grid-searches over deployment allocations
+    to find the strategy that maximises total alliance points.
 
-        ## Scoring channels
+    ## Scoring channels
 
-        1. **First capture** — one-time points when your alliance first occupies a building.
-        2. **Holding** — points per minute for each building you control.
-        3. **Chest escort** — chests spawn at Winterfell starting at minute 12.  The first
-           yields 4 000 pts; each subsequent chest adds 1 000.  A new chest appears
-           5 min after successful delivery.  Escorting takes time and ties up deployments.
+    1. **First capture** — one-time points when your alliance first occupies a building.
+    2. **Holding** — points per minute for each building you control.
+    3. **Chest escort** — chests spawn at Winterfell starting at minute 12.  The first
+       yields 4 000 pts; each subsequent chest adds 1 000.  A new chest appears
+       5 min after successful delivery.  Escorting takes time and ties up deployments.
 
-        ## Map timeline
+    ## Map timeline
 
-        | Period | Minutes | Available |
-        |--------|---------|-----------|
-        | 1 | 0–12 | Outposts only |
-        | 2 | 12–60 | All buildings unlock; chests begin spawning |
+    | Period | Minutes | Available |
+    |--------|---------|-----------|
+    | 1 | 0–12 | All buildings |
+    | 2 | 12–60 | All buildings; chests begin spawning |
 
-        ## Deployment model
+    ## Deployment model
 
-        Each player contributes 3 deployments.  Deployments are split across three roles:
-        **building capture/hold**, **chest escort**, and **reserve**.  The number of buildings
-        you can hold is bounded by `min(available_buildings, deployments / cost_per_building)`,
-        further attenuated by the **opponent strength** parameter.  Chest throughput is
-        constrained by the game rule that only one chest at a time comes from Winterfell
-        (next spawns after delivery + delay).
+    Each player contributes 3 deployments.  Deployments are split across three roles:
+    **building capture/hold**, **chest escort**, and **reserve**.  The number of buildings
+    you can hold is bounded by `min(available_buildings, deployments / cost_per_building)`,
+    further attenuated by the **opponent strength** parameter.  Chest throughput is
+    constrained by the game rule that only one chest at a time comes from Winterfell
+    (next spawns after delivery + delay).
 
-        > **Point values below are placeholders.**  Replace them with the actual in-game
-        > values for calibrated results.
-        """
-    )
+    > **Point values below are placeholders.**  Replace them with the actual in-game
+    > values for calibrated results.
+    """)
     return
 
 
@@ -54,26 +52,21 @@ def _():
     return mo, np
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# Section 1 — Building parameters
-# ═══════════════════════════════════════════════════════════════════════════════
-
-
 @app.cell
 def _(mo):
-    mo.md("## 1 · Building Parameters")
+    mo.md("""
+    ## 1 · Building Parameters
+    """)
     return
 
 
 @app.cell
 def _(mo):
-    mo.md(
-        """
-        Each building type: **first-capture points**, **hold points/min**,
-        **count** on the map, **capture time**, and **deployment cost** (how many
-        deployments needed to capture and garrison one instance).
-        """
-    )
+    mo.md("""
+    Each building type: **first-capture points**, **hold points/min**,
+    **count** on the map, **capture time**, and **deployment cost** (how many
+    deployments needed to capture and garrison one instance).
+    """)
     return
 
 
@@ -98,11 +91,11 @@ def _(mo):
         [outpost_first, outpost_hold, outpost_count, outpost_cap_time, outpost_dep_cost]
     )
     return (
+        outpost_cap_time,
+        outpost_count,
+        outpost_dep_cost,
         outpost_first,
         outpost_hold,
-        outpost_count,
-        outpost_cap_time,
-        outpost_dep_cost,
     )
 
 
@@ -133,11 +126,11 @@ def _(mo):
         ]
     )
     return (
+        stronghold_cap_time,
+        stronghold_count,
+        stronghold_dep_cost,
         stronghold_first,
         stronghold_hold,
-        stronghold_count,
-        stronghold_cap_time,
-        stronghold_dep_cost,
     )
 
 
@@ -162,22 +155,19 @@ def _(mo):
         [special_first, special_hold, special_count, special_cap_time, special_dep_cost]
     )
     return (
+        special_cap_time,
+        special_count,
+        special_dep_cost,
         special_first,
         special_hold,
-        special_count,
-        special_cap_time,
-        special_dep_cost,
     )
-
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# Section 2 — Chest parameters
-# ═══════════════════════════════════════════════════════════════════════════════
 
 
 @app.cell
 def _(mo):
-    mo.md("## 2 · Chest / Escort Parameters")
+    mo.md("""
+    ## 2 · Chest / Escort Parameters
+    """)
     return
 
 
@@ -211,19 +201,16 @@ def _(mo):
         chest_base_pts,
         chest_increment,
         chest_spawn_delay,
-        escort_time,
         escort_dep_cost,
+        escort_time,
     )
-
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# Section 3 — Force parameters
-# ═══════════════════════════════════════════════════════════════════════════════
 
 
 @app.cell
 def _(mo):
-    mo.md("## 3 · Force & Opponent Parameters")
+    mo.md("""
+    ## 3 · Force & Opponent Parameters
+    """)
     return
 
 
@@ -237,21 +224,14 @@ def _(mo):
     return n_players, opp_strength
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# Section 4 — Manual strategy sliders
-# ═══════════════════════════════════════════════════════════════════════════════
-
-
 @app.cell
 def _(mo):
-    mo.md(
-        """
-        ## 4 · Manual Strategy Allocation
+    mo.md("""
+    ## 4 · Manual Strategy Allocation
 
-        Set the percentage of your total deployment budget for each role.
-        Reserve = 100% − buildings% − chests% (clamped to ≥ 0).
-        """
-    )
+    Set the percentage of your total deployment budget for each role.
+    Reserve = 100% − buildings% − chests% (clamped to ≥ 0).
+    """)
     return
 
 
@@ -267,42 +247,39 @@ def _(mo):
     return pct_buildings, pct_chests
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# Section 5 — Simulation engine (defined as a reusable function)
-# ═══════════════════════════════════════════════════════════════════════════════
-
-
 @app.cell
 def _(mo):
-    mo.md("## 5 · Simulation Results")
+    mo.md("""
+    ## 5 · Simulation Results
+    """)
     return
 
 
 @app.cell
 def _(
-    np,
-    n_players,
-    opp_strength,
-    outpost_first,
-    outpost_hold,
-    outpost_count,
-    outpost_cap_time,
-    outpost_dep_cost,
-    stronghold_first,
-    stronghold_hold,
-    stronghold_count,
-    stronghold_cap_time,
-    stronghold_dep_cost,
-    special_first,
-    special_hold,
-    special_count,
-    special_cap_time,
-    special_dep_cost,
     chest_base_pts,
     chest_increment,
     chest_spawn_delay,
-    escort_time,
     escort_dep_cost,
+    escort_time,
+    n_players,
+    np,
+    opp_strength,
+    outpost_cap_time,
+    outpost_count,
+    outpost_dep_cost,
+    outpost_first,
+    outpost_hold,
+    special_cap_time,
+    special_count,
+    special_dep_cost,
+    special_first,
+    special_hold,
+    stronghold_cap_time,
+    stronghold_count,
+    stronghold_dep_cost,
+    stronghold_first,
+    stronghold_hold,
 ):
     MATCH_DURATION = 60
     PHASE2_START = 12
@@ -441,7 +418,7 @@ def _(
 
 
 @app.cell
-def _(simulate, pct_buildings, pct_chests):
+def _(pct_buildings, pct_chests, simulate):
     _pb = min(pct_buildings.value, 100)
     _pc = min(pct_chests.value, 100 - _pb)
     manual_result = simulate(_pb, _pc)
@@ -449,85 +426,78 @@ def _(simulate, pct_buildings, pct_chests):
 
 
 @app.cell
-def _(mo, manual_result):
-    r = manual_result
-    bh = r["buildings_held"]
+def _(manual_result, mo):
+    _r = manual_result
+    _bh = _r["buildings_held"]
     mo.md(
         f"""
         ### Manual Allocation Result
 
         | Metric | Value |
         |--------|------:|
-        | **Total points** | **{r["total"]:,}** |
-        | First-capture pts | {r["first_capture"]:,} |
-        | Holding pts | {r["hold"]:,} |
-        | Chest-escort pts | {r["chest"]:,} |
-        | Chests delivered | {r["chests_delivered"]} |
+        | **Total points** | **{_r["total"]:,}** |
+        | First-capture pts | {_r["first_capture"]:,} |
+        | Holding pts | {_r["hold"]:,} |
+        | Chest-escort pts | {_r["chest"]:,} |
+        | Chests delivered | {_r["chests_delivered"]} |
         | | |
-        | Deployments → bldg | {r["dep_bld"]} / {r["dep_total"]} |
-        | Deployments → chest | {r["dep_ch"]} / {r["dep_total"]} |
-        | Deployments → reserve | {r["dep_res"]} / {r["dep_total"]} |
+        | Deployments → bldg | {_r["dep_bld"]} / {_r["dep_total"]} |
+        | Deployments → chest | {_r["dep_ch"]} / {_r["dep_total"]} |
+        | Deployments → reserve | {_r["dep_res"]} / {_r["dep_total"]} |
         | | |
-        | Outposts held | {bh.get("Outpost", 0)} |
-        | Strongholds held | {bh.get("Stronghold", 0)} |
-        | Special bldgs held | {bh.get("Special", 0)} |
+        | Outposts held | {_bh.get("Outpost", 0)} |
+        | Strongholds held | {_bh.get("Stronghold", 0)} |
+        | Special bldgs held | {_bh.get("Special", 0)} |
         """
     )
     return
 
 
 @app.cell
-def _(mo, manual_result):
-    r = manual_result
-    t = max(r["total"], 1)
+def _(manual_result, mo):
+    _r = manual_result
+    _t = max(_r["total"], 1)
     mo.md(
         f"""
         ### Point Breakdown
 
         | Source | Points | Share |
         |--------|-------:|------:|
-        | First capture | {r["first_capture"]:,} | {r["first_capture"] / t * 100:.1f}% |
-        | Holding | {r["hold"]:,} | {r["hold"] / t * 100:.1f}% |
-        | Chest escort | {r["chest"]:,} | {r["chest"] / t * 100:.1f}% |
-        | **Total** | **{r["total"]:,}** | 100% |
+        | First capture | {_r["first_capture"]:,} | {_r["first_capture"] / _t * 100:.1f}% |
+        | Holding | {_r["hold"]:,} | {_r["hold"] / _t * 100:.1f}% |
+        | Chest escort | {_r["chest"]:,} | {_r["chest"] / _t * 100:.1f}% |
+        | **Total** | **{_r["total"]:,}** | 100% |
         """
     )
     return
 
 
 @app.cell
-def _(mo, manual_result):
-    tl = manual_result["timeline"]
-    rows = [e for e in tl if e["minute"] % 5 == 0 or e["minute"] == 59]
-    lines = []
-    for e in rows:
-        lines.append(
-            f"| {e['minute']:>3} | {e['first_capture']:>8,} "
-            f"| {e['hold']:>8,} | {e['chest']:>8,} "
-            f"| {e['total_this_min']:>8,} | {e['cumulative']:>10,} |"
+def _(manual_result, mo):
+    _tl = manual_result["timeline"]
+    _rows = [e for e in _tl if e["minute"] % 5 == 0 or e["minute"] == 59]
+    _lines = []
+    for _e in _rows:
+        _lines.append(
+            f"| {_e['minute']:>3} | {_e['first_capture']:>8,} "
+            f"| {_e['hold']:>8,} | {_e['chest']:>8,} "
+            f"| {_e['total_this_min']:>8,} | {_e['cumulative']:>10,} |"
         )
-    hdr = (
+    _hdr = (
         "| Min | 1st Cap  |   Hold   |  Chest   |  Minute  | Cumulative |\n"
         "|----:|:--------:|:--------:|:--------:|:--------:|:----------:|"
     )
-    mo.md(f"### Timeline (every 5 min)\n\n{hdr}\n" + "\n".join(lines))
+    mo.md(f"### Timeline (every 5 min)\n\n{_hdr}\n" + "\n".join(_lines))
     return
-
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# Section 6 — Optimiser
-# ═══════════════════════════════════════════════════════════════════════════════
 
 
 @app.cell
 def _(mo):
-    mo.md(
-        """
-        ## 6 · Allocation Optimiser
+    mo.md("""
+    ## 6 · Allocation Optimiser
 
-        Grid search over `(% buildings, % chests)` in 5 % steps.
-        """
-    )
+    Grid search over `(% buildings, % chests)` in 5 % steps.
+    """)
     return
 
 
@@ -540,82 +510,75 @@ def _(simulate):
     _all.sort(key=lambda x: -x["total"])
     opt_results = _all
     opt_best = _all[0]
-    return opt_results, opt_best
+    return opt_best, opt_results
 
 
 @app.cell
-def _(mo, opt_results, opt_best):
-    top = opt_results[:10]
-    lines = []
-    for i, r in enumerate(top):
-        tag = " ← best" if i == 0 else ""
-        lines.append(
-            f"| {r['pct_bld']:>3}% | {r['pct_ch']:>3}% | {r['pct_res']:>3}% "
-            f"| {r['dep_bld']:>4} | {r['dep_ch']:>4} "
-            f"| {r['total']:>10,} | {r['chests_delivered']:>2} "
-            f"| {r['first_capture']:>8,} | {r['hold']:>8,} | {r['chest']:>8,} |{tag}"
+def _(mo, opt_best, opt_results):
+    _top = opt_results[:10]
+    _lines = []
+    for _i, _r in enumerate(_top):
+        _tag = " ← best" if _i == 0 else ""
+        _lines.append(
+            f"| {_r['pct_bld']:>3}% | {_r['pct_ch']:>3}% | {_r['pct_res']:>3}% "
+            f"| {_r['dep_bld']:>4} | {_r['dep_ch']:>4} "
+            f"| {_r['total']:>10,} | {_r['chests_delivered']:>2} "
+            f"| {_r['first_capture']:>8,} | {_r['hold']:>8,} | {_r['chest']:>8,} |{_tag}"
         )
-    hdr = (
+    _hdr = (
         "| Bldg | Chest | Res | #DepB | #DepC |      Total | Ch | 1st Cap  |   Hold   |  Chest   |\n"
         "|-----:|------:|----:|------:|------:|-----------:|---:|---------:|---------:|---------:|"
     )
-    b = opt_best
+    _b = opt_best
     mo.md(
         f"""
         ### Top 10 Allocations
 
-        {hdr}
-        {"".join(chr(10) + l for l in lines)}
+        {_hdr}
+        {"".join(chr(10) + l for l in _lines)}
 
-        **Recommendation**: **{b["pct_bld"]}%** buildings, **{b["pct_ch"]}%** chests,
-        **{b["pct_res"]}%** reserve → **{b["total"]:,}** projected points.
+        **Recommendation**: **{_b["pct_bld"]}%** buildings, **{_b["pct_ch"]}%** chests,
+        **{_b["pct_res"]}%** reserve → **{_b["total"]:,}** projected points.
         """
     )
     return
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# Section 7 — Sensitivity sweep over hold-success rate
-# ═══════════════════════════════════════════════════════════════════════════════
-
-
 @app.cell
 def _(mo):
-    mo.md(
-        """
-        ## 7 · Sensitivity: Hold-Success Sweep
+    mo.md("""
+    ## 7 · Sensitivity: Hold-Success Sweep
 
-        The table below re-runs the optimiser for hold-success rates from 0.3 to 1.0,
-        showing how the optimal allocation shifts with opponent pressure.
-        """
-    )
+    The table below re-runs the optimiser for hold-success rates from 0.3 to 1.0,
+    showing how the optimal allocation shifts with opponent pressure.
+    """)
     return
 
 
 @app.cell
 def _(
-    np,
-    n_players,
-    outpost_first,
-    outpost_hold,
-    outpost_count,
-    outpost_cap_time,
-    outpost_dep_cost,
-    stronghold_first,
-    stronghold_hold,
-    stronghold_count,
-    stronghold_cap_time,
-    stronghold_dep_cost,
-    special_first,
-    special_hold,
-    special_count,
-    special_cap_time,
-    special_dep_cost,
     chest_base_pts,
     chest_increment,
     chest_spawn_delay,
-    escort_time,
     escort_dep_cost,
+    escort_time,
+    n_players,
+    np,
+    outpost_cap_time,
+    outpost_count,
+    outpost_dep_cost,
+    outpost_first,
+    outpost_hold,
+    special_cap_time,
+    special_count,
+    special_dep_cost,
+    special_first,
+    special_hold,
+    stronghold_cap_time,
+    stronghold_count,
+    stronghold_dep_cost,
+    stronghold_first,
+    stronghold_hold,
 ):
     MATCH = 60
     P2 = 12
@@ -690,65 +653,57 @@ def _(
         return cum
 
     sweep_rows = []
-    for hr_pct in range(30, 105, 10):
-        hr = hr_pct / 100
-        best_t = 0
-        best_pb = 0
-        best_pc = 0
-        for pb in range(0, 105, 5):
-            for pc in range(0, 105 - pb, 5):
-                t = _sim_hr(pb, pc, hr)
-                if t > best_t:
-                    best_t = t
-                    best_pb = pb
-                    best_pc = pc
-        sweep_rows.append((hr, best_pb, best_pc, 100 - best_pb - best_pc, best_t))
-
+    for _hr_pct in range(30, 105, 10):
+        _hr = _hr_pct / 100
+        _best_t = 0
+        _best_pb = 0
+        _best_pc = 0
+        for _pb in range(0, 105, 5):
+            for _pc in range(0, 105 - _pb, 5):
+                _t = _sim_hr(_pb, _pc, _hr)
+                if _t > _best_t:
+                    _best_t = _t
+                    _best_pb = _pb
+                    _best_pc = _pc
+        sweep_rows.append((_hr, _best_pb, _best_pc, 100 - _best_pb - _best_pc, _best_t))
     return (sweep_rows,)
 
 
 @app.cell
 def _(mo, sweep_rows):
-    lines = []
-    for hr, pb, pc, pr, tot in sweep_rows:
-        lines.append(f"| {hr:.1f} | {pb:>3}% | {pc:>3}% | {pr:>3}% | {tot:>10,} |")
-    hdr = (
+    _lines = []
+    for _hr, _pb, _pc, _pr, _tot in sweep_rows:
+        _lines.append(f"| {_hr:.1f} | {_pb:>3}% | {_pc:>3}% | {_pr:>3}% | {_tot:>10,} |")
+    _hdr = (
         "| Hold rate | Bldg | Chest | Res |      Total |\n"
         "|---------:|-----:|------:|----:|-----------:|"
     )
-    mo.md(f"### Optimal allocation by hold-success rate\n\n{hdr}\n" + "\n".join(lines))
+    mo.md(f"### Optimal allocation by hold-success rate\n\n{_hdr}\n" + "\n".join(_lines))
     return
-
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# Section 8 — Notes
-# ═══════════════════════════════════════════════════════════════════════════════
 
 
 @app.cell
 def _(mo):
-    mo.md(
-        """
-        ## 8 · Notes & Limitations
+    mo.md("""
+    ## 8 · Notes & Limitations
 
-        1. The simulation is **deterministic**. A stochastic variant (Beta-distributed
-           hold-success per minute, Monte Carlo over uncertain point values) would
-           produce distributional outputs rather than point estimates.
+    1. The simulation is **deterministic**. A stochastic variant (Beta-distributed
+       hold-success per minute, Monte Carlo over uncertain point values) would
+       produce distributional outputs rather than point estimates.
 
-        2. **Only one chest at a time** can be in transit from Winterfell per the game
-           rules.  The model enforces this.
+    2. **Only one chest at a time** can be in transit from Winterfell per the game
+       rules.  The model enforces this.
 
-        3. The model does **not** account for combat buffs from Hot Spring / Armory,
-           troop strength decay, or healing mechanics.
+    3. The model does **not** account for combat buffs from Hot Spring / Armory,
+       troop strength decay, or healing mechanics.
 
-        4. **Temporal reallocation** (shifting from buildings-heavy in Period 1 to
-           chests-heavy in Period 2) is not modelled; the current version uses a
-           static allocation for the full 60 minutes.
+    4. **Temporal reallocation** (shifting from buildings-heavy in Period 1 to
+       chests-heavy in Period 2) is not modelled; the current version uses a
+       static allocation for the full 60 minutes.
 
-        5. Building point values are **placeholders**.  Update them from in-game
-           screenshots for calibrated recommendations.
-        """
-    )
+    5. Building point values are **placeholders**.  Update them from in-game
+       screenshots for calibrated recommendations.
+    """)
     return
 
 
