@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 
 import numpy as np
 
-from got_wic.combat import BuildingFight, CombatState, apply_attrition, resolve_tick
+from got_wic.combat import BuildingFight, apply_attrition, resolve_combat_minute
 from got_wic.model import AllianceProfile, Allocation, GameConfig
 
 
@@ -91,8 +91,8 @@ def simulate(
 
     timeline: list[dict] = []
 
-    # Combat time step — smaller dt for stability with large power differences
-    dt = 0.05
+    # Combat sub-steps per minute (5 = dt of 0.2)
+    n_combat_steps = 5
 
     for t in range(cfg.match_duration):
         phase = _phase_for_minute(t, cfg.phase_boundaries)
@@ -124,18 +124,15 @@ def simulate(
             power_a = fa.total_power
             power_b = fb.total_power
 
-            # Run sub-ticks for combat resolution
+            # Run combat resolution for this minute
             if power_a > 0 and power_b > 0:
-                state = CombatState(power_a=power_a, power_b=power_b)
-                ticks_per_minute = int(1.0 / dt)
-                for _ in range(ticks_per_minute):
-                    state = resolve_tick(
-                        state, alpha=1.0, beta=1.0, noise_scale=noise_scale, dt=dt, rng=rng
-                    )
+                new_pa, new_pb = resolve_combat_minute(
+                    power_a, power_b, noise_scale, n_combat_steps, rng
+                )
 
                 # Apply losses as attrition
-                loss_a = power_a - state.power_a
-                loss_b = power_b - state.power_b
+                loss_a = power_a - new_pa
+                loss_b = power_b - new_pb
 
                 heal_before_a = sum(fa.healing_remaining)
                 heal_before_b = sum(fb.healing_remaining)
