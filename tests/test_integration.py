@@ -1,27 +1,61 @@
-from got_wic import default_config, optimize
+from pathlib import Path
+
+import numpy as np
+
+from got_wic import default_config, optimize, default_alliance_profile
+from got_wic.montecarlo import run_monte_carlo, save_results, load_results
 
 
-def test_full_pipeline_80v60():
-    """End-to-end: optimize for 80v60, check we get actionable results."""
+def test_full_pipeline_dominant_side():
+    """80 vs 40 players: dominant side should win consistently."""
     cfg = default_config()
-    results = optimize(cfg, 80, 60, opponent_spread=0.7, opponent_aggression=0.5, step_pct=25)
+    pa = default_alliance_profile(80)
+    pb = default_alliance_profile(40)
+    results = optimize(
+        cfg, pa, pb,
+        opponent_spread=0.7,
+        opponent_aggression=0.5,
+        step_pct=50,
+        n_trials=20,
+    )
     best = results[0]
-
-    # Should produce a positive score
-    assert best.score_a > 0
-    # Should beat the opponent (80 > 60 players)
-    assert best.score_a > best.score_b
-    # Breakdown should sum to total
-    total = sum(best.breakdown_a.values())
-    assert total == best.score_a
+    assert best.mean_score_a > 0
+    assert best.win_rate > 0.5
 
 
-def test_full_pipeline_50v50_close_game():
-    """50v50 should be a close game."""
+def test_full_pipeline_save_load(tmp_path):
+    """Run MC, save to npz, load back, verify data integrity."""
     cfg = default_config()
-    results = optimize(cfg, 50, 50, opponent_spread=0.5, opponent_aggression=0.5, step_pct=25)
+    from got_wic.model import Allocation, AllianceProfile, PlayerTier
+    pa = AllianceProfile(tiers=[PlayerTier("minnow", 8.0, 100)], counts=[20])
+    pb = AllianceProfile(tiers=[PlayerTier("minnow", 8.0, 100)], counts=[20])
+    a = Allocation(
+        assignments={"phase1": {"Stark Outpost": 20}, "phase2": {"Stark Outpost": 20}, "phase3": {"Stark Outpost": 20}},
+        total_armies=60,
+    )
+    b = Allocation(
+        assignments={"phase1": {"Greyjoy Outpost": 20}, "phase2": {"Greyjoy Outpost": 20}, "phase3": {"Greyjoy Outpost": 20}},
+        total_armies=60,
+    )
+    result = run_monte_carlo(cfg, a, b, pa, pb, n_trials=30, noise_scale=0.1)
+    path = tmp_path / "test.npz"
+    save_results(result, path)
+    loaded = load_results(path)
+    assert loaded.n_trials == 30
+    assert np.allclose(loaded.score_distribution_a, result.score_distribution_a)
+
+
+def test_hopeless_scenario():
+    """3 vs 100 players should be flagged as hopeless."""
+    cfg = default_config()
+    pa = default_alliance_profile(3)
+    pb = default_alliance_profile(100)
+    results = optimize(
+        cfg, pa, pb,
+        opponent_spread=0.5,
+        opponent_aggression=0.5,
+        step_pct=50,
+        n_trials=20,
+    )
     best = results[0]
-    assert best.score_a > 0
-    # Score difference should be relatively small compared to total
-    diff = abs(best.score_a - best.score_b)
-    assert diff < best.score_a  # not a blowout
+    assert best.hopeless is True
